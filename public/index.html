@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel de Viaje</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .trip-info {
+      border: 2px solid #ccc;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+    }
+    .trip-info h2 {
+      margin-top: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sección de Información del Viaje -->
+  <div id="tripInfo" class="trip-info">
+    <h2>Información del Viaje</h2>
+    <p><strong>Destino:</strong> <span id="destination">Cargando...</span></p>
+    <p><strong>Hora de llegada:</strong> <span id="arrivalTime">Cargando...</span></p>
+    <p><strong>Fecha:</strong> <span id="tripDate">Cargando...</span></p>
+  </div>
+
+  <div id="dashboard"></div>
+
+  <button class="title-button" onclick="loadInnerActivity('transporter.html')">CONDUCTOR</button>
+  <button class="title-button" onclick="loadInnerActivity('traveler.html')">PASAJERO</button>
+
+  <script>
+    // Cargar información del viaje
+    function loadTripInfo() {
+      fetch("/api/trip")
+        .then(res => res.json())
+        .then(trip => {
+          document.getElementById("destination").innerText = trip.destination || "No definido";
+          document.getElementById("arrivalTime").innerText = trip.arrivalTime || "No definido";
+          document.getElementById("tripDate").innerText = trip.date || "No definido";
+        })
+        .catch(err => {
+          console.error("Error al cargar la información del viaje:", err);
+          document.getElementById("tripInfo").innerText = "No se pudo cargar la información del viaje.";
+        });
+    }
+
+    // Cargar información del panel
+    function loadDashboard() {
+      fetch("/api/data")
+        .then(res => res.json())
+        .then(data => {
+          const dashboard = document.getElementById("dashboard");
+          dashboard.innerHTML = "<h2>Conductores y Pasajeros</h2>";
+
+          data.drivers.forEach(driver => {
+            const div = document.createElement("div");
+            div.innerHTML = `<strong>${driver.name}</strong>: ${driver.passengers.join(", ") || "Sin pasajeros"}`;
+            dashboard.appendChild(div);
+          });
+
+          dashboard.innerHTML += "<h2>Pasajeros en espera</h2>";
+          const waiting = data.passengers.filter(p => !p.assigned);
+          waiting.forEach(p => {
+            const div = document.createElement("div");
+            div.innerText = p.name;
+            dashboard.appendChild(div);
+          });
+        });
+    }
+
+    function loadInnerActivity(activityUrl) {
+      window.location.href = activityUrl;
+    }
+
+    // Carga inicial
+    loadTripInfo();
+    loadDashboard();
+  </script>
+</body>
+</html>

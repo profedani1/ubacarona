@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Driver Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    #registration, #assignment {
+      max-width: 600px;
+      margin: auto;
+    }
+    h2, h3 {
+      color: #333;
+    }
+    .section {
+      margin: 15px 0;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background: #f9f9f9;
+    }
+    .section input[type="text"] {
+      width: 100%;
+      margin: 5px 0;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+    .passenger-details {
+      margin-left: 25px;
+      font-size: 0.9em;
+      color: #555;
+    }
+    button {
+      margin-top: 10px;
+      padding: 8px 12px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .subsection {
+      margin-top: 10px;
+      padding: 8px;
+      border: 1px dashed #ccc;
+      border-radius: 4px;
+      background: #f1f1f1;
+    }
+    .subsection h4 {
+      margin-top: 0;
+      color: #555;
+    }
+    #travelDetailsForm {
+      display: none; /* hidden by default */
+    }
+  </style>
+</head>
+<body>
+ <button class="title-button" onclick="loadInnerActivity('index.html')">dashboard</button> 
+  <div id="registration">
+    <h2>Driver Login</h2>
+    <input type="text" id="driverName" placeholder="Enter your name" />
+    <button onclick="registerOrLoginDriver()">Register / Login</button>
+  </div>
+
+  <!-- Driver Dashboard -->
+  <div id="assignment" style="display: none;">
+    <h2>Welcome, <span id="driverWelcome"></span>!</h2>
+
+    <div class="section">
+      <h3>Passenger Assignment</h3>
+      <div class="subsection">
+        <h4>✅ Selected Passengers</h4>
+        <div id="selectedPassengerList"></div>
+      </div>
+      <div class="subsection">
+        <h4>❌ Not Selected Passengers</h4>
+        <div id="notSelectedPassengerList"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Travel Details (applies to all passengers)</h3>
+      <button id="toggleTravelBtn" onclick="toggleTravelDetails()">Edit Travel Details</button>
+      <div id="travelDetailsForm">
+        <label>Time: <input type="text" id="travelTime" placeholder="e.g. 14:30"></label><br>
+        <label>Location: <input type="text" id="travelLocation" placeholder="e.g. Main Street 123"></label><br>
+        <label>Comments: <input type="text" id="travelComments" placeholder="e.g. Be ready on time"></label><br>
+        <button onclick="saveTravelDetails()">Save Travel Details</button>
+      </div>
+    </div>
+
+    <button onclick="logout()">Logout</button>
+    <button onclick="eraseAccount()">Delete Account</button>
+  </div>
+
+  <script>
+    let driverName = "";
+
+    // Auto-login
+    window.onload = () => {
+      const savedDriver = localStorage.getItem("driverName");
+      if (savedDriver) {
+        driverName = savedDriver;
+        checkDriverExists(savedDriver).then(exists => {
+          if (exists) {
+            showAssignmentSection();
+          } else {
+            localStorage.removeItem("driverName");
+          }
+        });
+      }
+    };
+
+    function registerOrLoginDriver() {
+      driverName = document.getElementById("driverName").value.trim();
+      if (!driverName) {
+        alert("Please enter your name.");
+        return;
+      }
+
+      checkDriverExists(driverName).then(exists => {
+        if (exists) {
+          localStorage.setItem("driverName", driverName);
+          showAssignmentSection();
+        } else {
+          fetch("/api/drivers", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: driverName })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              localStorage.setItem("driverName", driverName);
+              showAssignmentSection();
+            } else {
+              alert("Failed to register driver.");
+            }
+          });
+        }
+      });
+    }
+
+    async function checkDriverExists(name) {
+      const response = await fetch("/api/data");
+      const data = await response.json();
+      return data.drivers.some(driver => driver.name === name);
+    }
+
+    function showAssignmentSection() {
+      document.getElementById("registration").style.display = "none";
+      document.getElementById("assignment").style.display = "block";
+      document.getElementById("driverWelcome").textContent = driverName;
+      loadPassengers();
+    }
+
+    function loadPassengers() {
+      fetch("/api/data")
+        .then(res => res.json())
+        .then(async data => {
+          const selectedList = document.getElementById("selectedPassengerList");
+          const notSelectedList = document.getElementById("notSelectedPassengerList");
+          selectedList.innerHTML = "";
+          notSelectedList.innerHTML = "";
+
+          const driver = data.drivers.find(d => d.name === driverName);
+          const assignedPassengers = driver ? driver.passengers : [];
+
+          const selectedPassengers = data.passengers
+            .filter(p => p.driver === driverName)
+            .map(p => ({ name: p.name, assigned: true }));
+
+          const notSelectedPassengers = data.passengers
+            .filter(p => !p.assigned)
+            .map(p => ({ name: p.name, assigned: false }));
+
+          for (const p of selectedPassengers) {
+            await addPassengerToList(p, selectedList, true);
+          }
+
+          for (const p of notSelectedPassengers) {
+            await addPassengerToList(p, notSelectedList, false);
+          }
+        });
+    }
+
+    async function addPassengerToList(passenger, container, isAssigned) {
+      const passengerDiv = document.createElement("div");
+      passengerDiv.className = "passenger-item";
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.value = passenger.name;
+      checkbox.checked = isAssigned;
+
+      checkbox.addEventListener("change", () => {
+        const newContainer = isAssigned 
+          ? document.getElementById("notSelectedPassengerList") 
+          : document.getElementById("selectedPassengerList");
+
+        passengerDiv.remove();
+        newContainer.appendChild(passengerDiv);
+        checkbox.checked = !isAssigned;
+        movePassenger(passenger.name, !isAssigned);
+      });
+
+      const label = document.createElement("label");
+      label.textContent = passenger.name;
+      label.prepend(checkbox);
+
+      passengerDiv.appendChild(label);
+
+      const detailsDiv = document.createElement("div");
+      detailsDiv.className = "passenger-details";
+
+      try {
+        const res = await fetch(`/api/passengers/${encodeURIComponent(passenger.name)}/personal`);
+        if (res.ok) {
+          const info = await res.json();
+          let detailsHTML = "";
+
+          if (info.numPeople) detailsHTML += `<div>👥 ${info.numPeople} people</div>`;
+          if (info.meetLocation) detailsHTML += `<div>📍 ${info.meetLocation}</div>`;
+          if (info.meetTime) detailsHTML += `<div>⏰ ${info.meetTime}</div>`;
+
+          if (detailsHTML) {
+            detailsDiv.innerHTML = detailsHTML;
+            passengerDiv.appendChild(detailsDiv);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching personal info:", err);
+      }
+
+      container.appendChild(passengerDiv);
+    }
+
+    function movePassenger(passengerName, assign) {
+      fetch(`/api/drivers/${encodeURIComponent(driverName)}/passengers`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ passengerName, assign })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) {
+          alert("Failed to update passenger assignment.");
+        }
+      });
+    }
+
+    function toggleTravelDetails() {
+      const form = document.getElementById("travelDetailsForm");
+      const button = document.getElementById("toggleTravelBtn");
+      if (form.style.display === "none") {
+        form.style.display = "block";
+        button.textContent = "Close Travel Details";
+      } else {
+        form.style.display = "none";
+        button.textContent = "Edit Travel Details";
+      }
+    }
+
+    function saveTravelDetails() {
+      const time = document.getElementById("travelTime").value.trim();
+      const location = document.getElementById("travelLocation").value.trim();
+      const comments = document.getElementById("travelComments").value.trim();
+
+      fetch(`/api/drivers/${encodeURIComponent(driverName)}/travel`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ time, location, comments })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert("Travel details saved for all passengers.");
+        } else {
+          alert("Failed to save travel details.");
+        }
+      });
+    }
+
+    function logout() {
+      localStorage.removeItem("driverName");
+      location.reload();
+    }
+
+    function eraseAccount() {
+      if (!confirm("Are you sure you want to delete your account? This will remove all your assignments.")) {
+        return;
+      }
+
+      fetch(`/api/drivers/${encodeURIComponent(driverName)}`, {
+        method: "DELETE"
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert("Your account has been erased.");
+          localStorage.removeItem("driverName");
+          location.reload();
+        } else {
+          alert("Error: " + data.message);
+        }
+      });
+    }
+      function loadInnerActivity(activityUrl) {
+  window.location.href = activityUrl;
+
+      }
+  </script>
+</body>
+</html>

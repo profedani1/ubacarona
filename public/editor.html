@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edit Trip Details</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f4f4f9;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 5px;
+    }
+    input[type="text"],
+    input[type="time"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .success-message {
+      color: green;
+      margin-top: 10px;
+    }
+    .error-message {
+      color: red;
+      margin-top: 10px;
+    }
+    #calendar {
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Edit Trip Details</h1>
+
+  <div class="form-group">
+    <label for="destination">Destination:</label>
+    <input type="text" id="destination" placeholder="Enter destination" />
+  </div>
+
+  <div class="form-group">
+    <label for="arrivalTime">Arrival Time:</label>
+    <input type="time" id="arrivalTime" />
+  </div>
+
+  <div class="form-group">
+    <label>Date:</label>
+    <div id="calendar"></div>
+  </div>
+
+  <button onclick="saveTrip()">Save Trip Details</button>
+  <p id="message"></p>
+<button onclick="resetTrip()" style="background-color: #dc3545;">Reset Trip</button>
+
+  <script>
+    let selectedDate = null;
+
+    // Render a simple calendar
+    function renderCalendar() {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = today.getMonth();
+      const calendarEl = document.getElementById("calendar");
+
+      const calendar = document.createElement("input");
+      calendar.type = "date";
+      calendar.valueAsDate = today; // Default selected date
+      calendar.addEventListener("change", () => {
+        selectedDate = calendar.value;
+      });
+      selectedDate = calendar.value;
+
+      calendarEl.innerHTML = "";
+      calendarEl.appendChild(calendar);
+
+      // Open the calendar popup automatically
+      setTimeout(() => calendar.showPicker(), 0);
+    }
+
+    // Load existing trip info
+    function loadTrip() {
+      fetch("/api/trip")
+        .then(res => res.json())
+        .then(trip => {
+          document.getElementById("destination").value = trip.destination || "";
+          document.getElementById("arrivalTime").value = trip.arrivalTime || "";
+          if (trip.date) {
+            selectedDate = trip.date;
+            document.querySelector("#calendar input").value = trip.date;
+          }
+        })
+        .catch(err => {
+          console.error("Failed to load trip data:", err);
+          document.getElementById("message").innerText = "Error loading trip data.";
+          document.getElementById("message").className = "error-message";
+        });
+    }
+
+    // Save updated trip info
+    function saveTrip() {
+      const destination = document.getElementById("destination").value;
+      const arrivalTime = document.getElementById("arrivalTime").value;
+
+      fetch("/api/trip", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          destination,
+          arrivalTime,
+          date: selectedDate
+        })
+      })
+      .then(res => res.json())
+      .then(result => {
+        if (result.success) {
+          document.getElementById("message").innerText = "Trip details saved successfully!";
+          document.getElementById("message").className = "success-message";
+        } else {
+          document.getElementById("message").innerText = "Failed to save trip details.";
+          document.getElementById("message").className = "error-message";
+        }
+      })
+      .catch(err => {
+        console.error("Error saving trip data:", err);
+        document.getElementById("message").innerText = "Error saving trip data.";
+        document.getElementById("message").className = "error-message";
+      });
+    }
+
+    // Initialize
+    renderCalendar();
+    loadTrip();
+    function resetTrip() {
+  if (confirm("Are you sure you want to reset the trip? This will delete all passengers, drivers, and trip details.")) {
+    fetch("/api/reset", {
+      method: "POST"
+    })
+    .then(res => res.json())
+    .then(result => {
+      if (result.success) {
+        document.getElementById("message").innerText = "Trip reset successfully!";
+        document.getElementById("message").className = "success-message";
+        // Clear input fields
+        document.getElementById("destination").value = "";
+        document.getElementById("arrivalTime").value = "";
+        document.querySelector("#calendar input").value = "";
+      } else {
+        document.getElementById("message").innerText = "Failed to reset trip.";
+        document.getElementById("message").className = "error-message";
+      }
+    })
+    .catch(err => {
+      console.error("Error resetting trip:", err);
+      document.getElementById("message").innerText = "Error resetting trip.";
+      document.getElementById("message").className = "error-message";
+    });
+  }
+}
+
+  </script>
+</body>
+</html>
