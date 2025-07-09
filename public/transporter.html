@@ -1,110 +1,154 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Driver Dashboard</title>
+  <title>Panel del Conductor</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
+    /* (styles unchanged) */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
     }
+
+    html, body {
+      height: 100vh;
+      background: linear-gradient(145deg, black, #2a2e38);
+      color: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: start;
+      padding: 2vh;
+    }
+
     #registration, #assignment {
+      width: 90vw;
       max-width: 600px;
-      margin: auto;
+      margin-bottom: 3vh;
+      background-color: #2e3440;
+      border: 1px solid #444;
+      border-radius: 1vh;
+      padding: 2vh;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.15);
     }
+
     h2, h3 {
-      color: #333;
+      font-size: 2.2vh;
+      margin-bottom: 1vh;
+      color: #00bcd4;
     }
+
+    h4 {
+      font-size: 1.8vh;
+      color: #aaa;
+      margin-bottom: 0.5vh;
+    }
+
     .section {
-      margin: 15px 0;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      background: #f9f9f9;
+      margin: 1.5vh 0;
+      padding: 2vh;
+      border: 1px solid #555;
+      border-radius: 1vh;
+      background: #3a3f4b;
+      box-shadow: 0 0 6px rgba(255, 255, 255, 0.05);
     }
+
     .section input[type="text"] {
       width: 100%;
-      margin: 5px 0;
-      padding: 8px;
-      box-sizing: border-box;
+      margin: 1vh 0;
+      padding: 1.2vh;
+      border-radius: 0.5vh;
+      background: #1e1e1e;
+      border: 1px solid #555;
+      color: #f5f5f5;
     }
+
+    .section input[type="text"]::placeholder {
+      color: #888;
+    }
+
     .passenger-details {
-      margin-left: 25px;
-      font-size: 0.9em;
-      color: #555;
+      margin-left: 2vh;
+      font-size: 1.5vh;
+      color: #bbb;
     }
+
     button {
-      margin-top: 10px;
-      padding: 8px 12px;
-      background-color: #007BFF;
-      color: white;
+      margin-top: 2vh;
+      padding: 1.5vh 2vh;
+      background: linear-gradient(to right, #00bcd4, #008cba);
+      color: black;
       border: none;
-      border-radius: 4px;
+      border-radius: 1vh;
+      font-weight: bold;
+      font-size: 2vh;
       cursor: pointer;
+      transition: transform 0.2s ease, background 0.3s;
     }
+
     button:hover {
-      background-color: #0056b3;
+      transform: scale(1.05);
+      background: black;
+      color: white;
     }
+
     .subsection {
-      margin-top: 10px;
-      padding: 8px;
-      border: 1px dashed #ccc;
-      border-radius: 4px;
-      background: #f1f1f1;
+      margin-top: 2vh;
+      padding: 1.5vh;
+      border: 1px dashed #777;
+      border-radius: 1vh;
+      background: #2b313c;
     }
-    .subsection h4 {
-      margin-top: 0;
-      color: #555;
-    }
+
     #travelDetailsForm {
-      display: none; /* hidden by default */
+      display: none;
     }
   </style>
 </head>
 <body>
- <button class="title-button" onclick="loadInnerActivity('index.html')">dashboard</button> 
+  <button class="title-button" onclick="loadInnerActivity('index.html')">panel</button> 
   <div id="registration">
-    <h2>Driver Login</h2>
-    <input type="text" id="driverName" placeholder="Enter your name" />
-    <button onclick="registerOrLoginDriver()">Register / Login</button>
+    <h2>Ingreso del Conductor</h2>
+    <input type="text" id="driverName" placeholder="Ingresa tu nombre" />
+    <button onclick="registerOrLoginDriver()">Registrarse / Iniciar sesión</button>
   </div>
 
-  <!-- Driver Dashboard -->
   <div id="assignment" style="display: none;">
-    <h2>Welcome, <span id="driverWelcome"></span>!</h2>
+    <h2>¡Bienvenido, <span id="driverWelcome"></span>!</h2>
 
     <div class="section">
-      <h3>Passenger Assignment</h3>
+      <h3>Asignación de Pasajeros</h3>
       <div class="subsection">
-        <h4>✅ Selected Passengers</h4>
+        <h4>✅ Pasajeros Seleccionados</h4>
         <div id="selectedPassengerList"></div>
       </div>
       <div class="subsection">
-        <h4>❌ Not Selected Passengers</h4>
+        <h4>❌ Pasajeros No Seleccionados</h4>
         <div id="notSelectedPassengerList"></div>
       </div>
     </div>
 
     <div class="section">
-      <h3>Travel Details (applies to all passengers)</h3>
-      <button id="toggleTravelBtn" onclick="toggleTravelDetails()">Edit Travel Details</button>
+      <h3>Detalles del Viaje (aplica a todos los pasajeros)</h3>
+      <button id="toggleTravelBtn" onclick="toggleTravelDetails()">Editar Detalles del Viaje</button>
       <div id="travelDetailsForm">
-        <label>Time: <input type="text" id="travelTime" placeholder="e.g. 14:30"></label><br>
-        <label>Location: <input type="text" id="travelLocation" placeholder="e.g. Main Street 123"></label><br>
-        <label>Comments: <input type="text" id="travelComments" placeholder="e.g. Be ready on time"></label><br>
-        <button onclick="saveTravelDetails()">Save Travel Details</button>
+        <label>Hora: <input type="text" id="travelTime" placeholder="ej. 14:30"></label><br>
+        <label>Ubicación: <input type="text" id="travelLocation" placeholder="ej. Calle Principal 123"></label><br>
+        <label>Comentarios: <input type="text" id="travelComments" placeholder="ej. Estar listo a tiempo"></label><br>
+        <button onclick="saveTravelDetails()">Guardar Detalles del Viaje</button>
       </div>
     </div>
 
-    <button onclick="logout()">Logout</button>
-    <button onclick="eraseAccount()">Delete Account</button>
+    <button onclick="logout()">Cerrar sesión</button>
+    <button onclick="eraseAccount()">Eliminar cuenta</button>
   </div>
 
   <script>
     let driverName = "";
 
-    // Auto-login
     window.onload = () => {
       const savedDriver = localStorage.getItem("driverName");
       if (savedDriver) {
@@ -122,7 +166,7 @@
     function registerOrLoginDriver() {
       driverName = document.getElementById("driverName").value.trim();
       if (!driverName) {
-        alert("Please enter your name.");
+        alert("Por favor ingresa tu nombre.");
         return;
       }
 
@@ -142,7 +186,7 @@
               localStorage.setItem("driverName", driverName);
               showAssignmentSection();
             } else {
-              alert("Failed to register driver.");
+              alert("No se pudo registrar al conductor.");
             }
           });
         }
@@ -227,7 +271,7 @@
           const info = await res.json();
           let detailsHTML = "";
 
-          if (info.numPeople) detailsHTML += `<div>👥 ${info.numPeople} people</div>`;
+          if (info.numPeople) detailsHTML += `<div>👥 ${info.numPeople} personas</div>`;
           if (info.meetLocation) detailsHTML += `<div>📍 ${info.meetLocation}</div>`;
           if (info.meetTime) detailsHTML += `<div>⏰ ${info.meetTime}</div>`;
 
@@ -237,7 +281,7 @@
           }
         }
       } catch (err) {
-        console.error("Error fetching personal info:", err);
+        console.error("Error al obtener la información personal:", err);
       }
 
       container.appendChild(passengerDiv);
@@ -252,7 +296,7 @@
       .then(res => res.json())
       .then(data => {
         if (!data.success) {
-          alert("Failed to update passenger assignment.");
+          alert("No se pudo actualizar la asignación del pasajero.");
         }
       });
     }
@@ -262,10 +306,10 @@
       const button = document.getElementById("toggleTravelBtn");
       if (form.style.display === "none") {
         form.style.display = "block";
-        button.textContent = "Close Travel Details";
+        button.textContent = "Cerrar Detalles del Viaje";
       } else {
         form.style.display = "none";
-        button.textContent = "Edit Travel Details";
+        button.textContent = "Editar Detalles del Viaje";
       }
     }
 
@@ -282,9 +326,9 @@
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          alert("Travel details saved for all passengers.");
+          alert("Detalles del viaje guardados para todos los pasajeros.");
         } else {
-          alert("Failed to save travel details.");
+          alert("No se pudieron guardar los detalles del viaje.");
         }
       });
     }
@@ -295,7 +339,7 @@
     }
 
     function eraseAccount() {
-      if (!confirm("Are you sure you want to delete your account? This will remove all your assignments.")) {
+      if (!confirm("¿Estás seguro de que quieres eliminar tu cuenta? Esto eliminará todas tus asignaciones.")) {
         return;
       }
 
@@ -305,7 +349,7 @@
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          alert("Your account has been erased.");
+          alert("Tu cuenta ha sido eliminada.");
           localStorage.removeItem("driverName");
           location.reload();
         } else {
@@ -313,10 +357,10 @@
         }
       });
     }
-      function loadInnerActivity(activityUrl) {
-  window.location.href = activityUrl;
 
-      }
+    function loadInnerActivity(activityUrl) {
+      window.location.href = activityUrl;
+    }
   </script>
 </body>
 </html>
