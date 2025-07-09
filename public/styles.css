@@ -1,13 +1,9 @@
   <style>
 
-   .trip-info {
-      border: 2px solid #ccc;
-      padding: 15px;
-      margin-bottom: 20px;
-      border-radius: 8px;
-      background-color: #f9f9f9;
-    }
-    .trip-info h2 {
-      margin-top: 0;
+     * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
     }
   </style>
