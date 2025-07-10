@@ -1,28 +1,10 @@
 {
-  "passengers": [
-    {
-      "name": "maria",
-      "assigned": true,
-      "driver": "peter",
-      "time": "8:00",
-      "location": "salon",
-      "comments": "a la hora",
-      "numPeople": null,
-      "meetLocation": "salon",
-      "meetTime": ""
-    }
-  ],
-  "drivers": [
-    {
-      "name": "peter",
-      "passengers": [
-        "maria"
-      ]
-    }
-  ],
-  "trip": {
-    "destination": "pereque",
-    "arrivalTime": "09:00",
-    "date": "2025-07-07"
-  }
+  "appMeta": {
+    "name": "trip-organizer",
+    "version": "1.0.0",
+    "description": "App to organize transportation for trips"
+  },
+  "passengers": [],
+  "drivers": [],
+  "trip": {}
 }
