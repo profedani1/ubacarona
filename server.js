@@ -283,7 +283,7 @@ app.put("/api/trip", (req, res) => {
   saveData(data);
   res.json({ success: true, message: "Trip information updated." });
 });
-
+ 
 // Reset entire trip
 app.post("/api/reset", (req, res) => {
   const data = loadData();
