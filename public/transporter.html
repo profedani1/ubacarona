@@ -197,20 +197,7 @@
           localStorage.setItem("driverName", driverName);
           showAssignmentSection();
         } else {
-          fetch("/api/drivers", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: driverName })
-          })
-          .then(res => res.json())
-          .then(data => {
-            if (data.success) {
-              localStorage.setItem("driverName", driverName);
-              showAssignmentSection();
-            } else {
-              alert("No se pudo registrar al conductor.");
-            }
-          });
+          alert("Este sistema no admite nuevos registros. Contacta con el administrador.");
         }
       });
     }
@@ -310,17 +297,7 @@
     }
 
     function movePassenger(passengerName, assign) {
-      fetch(`/api/drivers/${encodeURIComponent(driverName)}/passengers`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ passengerName, assign })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (!data.success) {
-          alert("No se pudo actualizar la asignación del pasajero.");
-        }
-      });
+      alert("Este sistema no permite modificar asignaciones directamente.");
     }
 
     function toggleTravelDetails() {
@@ -336,23 +313,7 @@
     }
 
     function saveTravelDetails() {
-      const time = document.getElementById("travelTime").value.trim();
-      const location = document.getElementById("travelLocation").value.trim();
-      const comments = document.getElementById("travelComments").value.trim();
-
-      fetch(`/api/drivers/${encodeURIComponent(driverName)}/travel`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ time, location, comments })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          alert("Detalles del viaje guardados para todos los pasajeros.");
-        } else {
-          alert("No se pudieron guardar los detalles del viaje.");
-        }
-      });
+      alert("Este sistema no permite guardar detalles desde la interfaz.");
     }
 
     function logout() {
@@ -361,23 +322,7 @@
     }
 
     function eraseAccount() {
-      if (!confirm("¿Estás seguro de que quieres eliminar tu cuenta? Esto eliminará todas tus asignaciones.")) {
-        return;
-      }
-
-      fetch(`/api/drivers/${encodeURIComponent(driverName)}`, {
-        method: "DELETE"
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          alert("Tu cuenta ha sido eliminada.");
-          localStorage.removeItem("driverName");
-          location.reload();
-        } else {
-          alert("Error: " + data.message);
-        }
-      });
+      alert("Este sistema no permite eliminar cuentas desde aquí.");
     }
 
     function loadInnerActivity(activityUrl) {
