@@ -23,34 +23,6 @@ function saveData(data) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 }
 
-// ✅ Get app metadata
-app.get("/api/meta", (req, res) => {
-  try {
-    const data = loadData();
-    res.json(data.appMeta || {});
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Failed to load metadata." });
-  }
-});
-
-// ✅ Update app metadata
-app.put("/api/meta", (req, res) => {
-  const { name, version, description } = req.body;
-  try {
-    const data = loadData();
-    data.appMeta = data.appMeta || {};
-    if (name) data.appMeta.name = name;
-    if (version) data.appMeta.version = version;
-    if (description) data.appMeta.description = description;
-    saveData(data);
-    res.json({ success: true, message: "Metadata updated." });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Failed to save metadata." });
-  }
-});
-
-// === Your existing endpoints remain unchanged below ===
-
 // Register passenger
 app.post("/api/passengers", (req, res) => {
   const { name } = req.body;
@@ -89,7 +61,7 @@ app.post("/api/drivers", (req, res) => {
   res.json({ success: true });
 });
 
-// Assign or unassign a passenger
+// ✅ Assign or unassign a passenger instantly
 app.put("/api/drivers/:name/passengers", (req, res) => {
   const driverName = req.params.name;
   const { passengerName, assign } = req.body;
@@ -106,18 +78,21 @@ app.put("/api/drivers/:name/passengers", (req, res) => {
   }
 
   if (assign) {
+    // Unassign from previous driver
     if (passenger.driver && passenger.driver !== driverName) {
       const oldDriver = data.drivers.find(d => d.name === passenger.driver);
       if (oldDriver) {
         oldDriver.passengers = oldDriver.passengers.filter(p => p !== passengerName);
       }
     }
+    // Assign to current driver
     passenger.assigned = true;
     passenger.driver = driverName;
     if (!driver.passengers.includes(passengerName)) {
       driver.passengers.push(passengerName);
     }
   } else {
+    // Unassign from current driver
     passenger.assigned = false;
     passenger.driver = null;
     passenger.time = null;
@@ -140,6 +115,7 @@ app.delete("/api/drivers/:name", (req, res) => {
     return res.status(404).json({ success: false, message: "Driver not found." });
   }
 
+  // Unassign passengers from this driver
   const passengersToUnassign = data.drivers[driverIndex].passengers;
   passengersToUnassign.forEach(passengerName => {
     const passenger = data.passengers.find(p => p.name === passengerName);
@@ -190,6 +166,7 @@ app.put("/api/drivers/:name/travel", (req, res) => {
 // Get passenger personal info
 app.get("/api/passengers/:name/personal", (req, res) => {
   const passengerName = req.params.name;
+
   const data = loadData();
   const passenger = data.passengers.find(p => p.name === passengerName);
   if (!passenger) {
@@ -203,7 +180,7 @@ app.get("/api/passengers/:name/personal", (req, res) => {
   });
 });
 
-// Save passenger personal info
+// ✅ Save passenger personal info (updated logic)
 app.put("/api/passengers/:name/personal", (req, res) => {
   const passengerName = req.params.name;
   const { numPeople, meetLocation, meetTime } = req.body;
@@ -232,6 +209,7 @@ app.delete("/api/passengers/:name", (req, res) => {
     return res.status(404).json({ success: false, message: "Passenger not found." });
   }
 
+  // Remove passenger from driver
   const passenger = data.passengers[passengerIndex];
   if (passenger.driver) {
     const driver = data.drivers.find(d => d.name === passenger.driver);
@@ -241,6 +219,7 @@ app.delete("/api/passengers/:name", (req, res) => {
   }
 
   data.passengers.splice(passengerIndex, 1);
+
   saveData(data);
   res.json({ success: true, message: "Passenger account erased." });
 });
@@ -283,14 +262,14 @@ app.put("/api/trip", (req, res) => {
   saveData(data);
   res.json({ success: true, message: "Trip information updated." });
 });
- 
+
 // Reset entire trip
 app.post("/api/reset", (req, res) => {
-  const data = loadData();
-
-  data.passengers = [];
-  data.drivers = [];
-  data.trip = {};
+  const data = {
+    passengers: [],
+    drivers: [],
+    trip: {}
+  };
 
   saveData(data);
   res.json({ success: true, message: "Trip, passengers, and drivers have been reset." });
@@ -298,5 +277,5 @@ app.post("/api/reset", (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(🚀 Server running at http://localhost:${PORT});
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
