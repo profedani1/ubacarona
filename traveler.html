@@ -1,0 +1,219 @@
+<!-- traveler.html - Firebase Integrated Version -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel del Pasajero</title>
+  <style>
+    .info-summary {
+      font-size: 1.1em;
+      line-height: 1.6;
+    }
+  </style>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import {
+      getDatabase,
+      ref,
+      set,
+      get,
+      update,
+      onValue,
+      child
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD8rSlUYQivypC11w1B4Txy7W7bW81RbP8",
+      authDomain: "ubacarona.firebaseapp.com",
+      databaseURL: "https://ubacarona-default-rtdb.firebaseio.com",
+      projectId: "ubacarona",
+      storageBucket: "ubacarona.firebasestorage.app",
+      messagingSenderId: "1032392073098",
+      appId: "1:1032392073098:web:f40d193f6e867fe0d9f273"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    let passengerName = "";
+    let hasPersonalInfo = false;
+
+    window.addEventListener("DOMContentLoaded", async () => {
+      const saved = localStorage.getItem("passengerName");
+      if (saved) {
+        passengerName = saved;
+        const exists = await checkPassengerExists(saved);
+        if (exists) {
+          showPassengerSection();
+          fetchPersonalInfo(passengerName);
+          fetchTravelDetails(passengerName);
+          setInterval(() => fetchTravelDetails(passengerName), 5000);
+        } else {
+          localStorage.removeItem("passengerName");
+        }
+      }
+    });
+
+    async function checkPassengerExists(name) {
+      const snapshot = await get(ref(db, "passengers"));
+      const data = snapshot.val() || {};
+      return Object.values(data).some(p => p.name === name);
+    }
+
+    window.registerOrLoginPassenger = async () => {
+      passengerName = document.getElementById("passengerName").value.trim();
+      if (!passengerName) return alert("Por favor ingresa tu nombre.");
+
+      const exists = await checkPassengerExists(passengerName);
+      if (exists) {
+        localStorage.setItem("passengerName", passengerName);
+        location.reload();
+      } else {
+        const id = crypto.randomUUID();
+        await set(ref(db, `passengers/${id}`), {
+          name: passengerName,
+          assigned: false
+        });
+        localStorage.setItem("passengerName", passengerName);
+        location.reload();
+      }
+    };
+
+    function showPassengerSection() {
+      document.getElementById("registration").style.display = "none";
+      document.getElementById("passengerDashboard").style.display = "block";
+      document.getElementById("passengerWelcome").textContent = passengerName;
+    }
+
+    async function fetchPersonalInfo(name) {
+      const snapshot = await get(ref(db, "passengers"));
+      const passengers = snapshot.val() || {};
+      const entry = Object.entries(passengers).find(([id, p]) => p.name === name);
+      if (!entry) return;
+
+      const info = entry[1];
+      const personalDetailsDiv = document.getElementById("personalDetails");
+      const toggleBtn = document.getElementById("toggleDetailsBtn");
+      const infoSummary = document.getElementById("infoSummary");
+      const infoForm = document.getElementById("infoForm");
+
+      personalDetailsDiv.style.display = "block";
+
+      if (info.numPeople || info.meetLocation || info.meetTime) {
+        hasPersonalInfo = true;
+        infoSummary.innerHTML = `
+          👥 ${info.numPeople || "N/D"} personas<br>
+          📍 ${info.meetLocation || "N/D"}<br>
+          ⏰ ${info.meetTime || "N/D"}`;
+        infoSummary.style.display = "block";
+        infoForm.style.display = "none";
+        toggleBtn.textContent = "EDITAR DETALLES";
+      } else {
+        hasPersonalInfo = false;
+        infoSummary.style.display = "none";
+        infoForm.style.display = "none";
+        toggleBtn.textContent = "AÑADIR DETALLES";
+      }
+    }
+
+    window.toggleEditMode = () => {
+      const infoSummary = document.getElementById("infoSummary");
+      const infoForm = document.getElementById("infoForm");
+      const toggleBtn = document.getElementById("toggleDetailsBtn");
+
+      if (toggleBtn.textContent === "AÑADIR DETALLES" || toggleBtn.textContent === "EDITAR DETALLES") {
+        infoSummary.style.display = "none";
+        infoForm.style.display = "block";
+        toggleBtn.textContent = "CANCELAR";
+      } else {
+        infoSummary.style.display = "block";
+        infoForm.style.display = "none";
+        toggleBtn.textContent = "EDITAR DETALLES";
+      }
+    };
+
+    window.savePersonalInfo = async () => {
+      const snapshot = await get(ref(db, "passengers"));
+      const passengers = snapshot.val() || {};
+      const entry = Object.entries(passengers).find(([id, p]) => p.name === passengerName);
+      if (!entry) return;
+
+      const id = entry[0];
+      const numPeople = parseInt(document.getElementById("numPeople").value, 10) || null;
+      const meetLocation = document.getElementById("meetLocation").value;
+      const meetTime = document.getElementById("meetTime").value;
+
+      await update(ref(db, `passengers/${id}`), {
+        numPeople,
+        meetLocation,
+        meetTime
+      });
+
+      fetchPersonalInfo(passengerName);
+    };
+
+    async function fetchTravelDetails(name) {
+      const snapshot = await get(ref(db, "passengers"));
+      const passengers = snapshot.val() || {};
+      const entry = Object.values(passengers).find(p => p.name === name);
+      const travelDiv = document.getElementById("travelContent");
+
+      if (!entry || !entry.driver) {
+        travelDiv.innerHTML = `<p>Esperando asignación…</p>`;
+      } else {
+        travelDiv.innerHTML = `
+          <p><strong>Conductor:</strong> ${entry.driver}</p>
+          ${!hasPersonalInfo && entry.time ? `<p><strong>Hora:</strong> ${entry.time}</p>` : ""}
+          ${!hasPersonalInfo && entry.location ? `<p><strong>Ubicación:</strong> ${entry.location}</p>` : ""}
+          ${entry.comments ? `<p><strong>Comentarios:</strong> ${entry.comments}</p>` : ""}`;
+      }
+    }
+
+    window.logoutPassenger = () => {
+      localStorage.removeItem("passengerName");
+      location.reload();
+    };
+  </script>
+</head>
+<body>
+  <button class="title-button" onclick="location.href='index.html'">Panel</button>
+  <div id="registration">
+    <input type="text" id="passengerName" placeholder="Ingresa tu nombre">
+    <button onclick="registerOrLoginPassenger()">Registrar / Iniciar sesión</button>
+  </div>
+
+  <div id="passengerDashboard" style="display:none;">
+    <h2>Bienvenido(a), <span id="passengerWelcome"></span>!</h2>
+
+    <div id="personalDetailsContainer" style="margin-top: 20px;">
+      <button id="toggleDetailsBtn" onclick="toggleEditMode()">AÑADIR DETALLES</button>
+
+      <div id="personalDetails" style="display:none; border: 1px solid #ccc; padding: 10px; margin-top:10px;">
+        <h3>Tus Datos Personales</h3>
+
+        <div id="infoSummary" class="info-summary" style="display:none;"></div>
+
+        <div id="infoForm" style="display:none;">
+          <label>Número de personas que van:</label>
+          <input type="number" id="numPeople" placeholder="ej.: 2"><br><br>
+          <label>Ubicación deseada para el encuentro:</label>
+          <input type="text" id="meetLocation" placeholder="ej.: Calle Principal"><br><br>
+          <label>Hora deseada para el encuentro:</label>
+          <input type="time" id="meetTime"><br><br>
+          <button id="saveBtn" onclick="savePersonalInfo()">Guardar Datos Personales</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="travelDetails" style="margin-top: 20px; border: 1px solid #ccc; padding: 10px;">
+      <h3>Tus Detalles del Viaje</h3>
+      <div id="travelContent">
+        <p>Esperando asignación…</p>
+      </div>
+    </div>
+
+    <button onclick="logoutPassenger()">Cerrar Sesión</button>
+  </div>
+</body>
+</html>
