@@ -1,0 +1,214 @@
+<!-- transporter.html - Firebase Integrated Version -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Driver Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    #registration, #assignment {
+      max-width: 600px;
+      margin: auto;
+    }
+    .section {
+      margin: 15px 0;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background: #f9f9f9;
+    }
+    .subsection {
+      margin-top: 10px;
+      padding: 8px;
+      border: 1px dashed #ccc;
+      border-radius: 4px;
+      background: #f1f1f1;
+    }
+    button {
+      margin-top: 10px;
+      padding: 8px 12px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import {
+      getDatabase, ref, get, set, update, onValue, push
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD8rSlUYQivypC11w1B4Txy7W7bW81RbP8",
+      authDomain: "ubacarona.firebaseapp.com",
+      databaseURL: "https://ubacarona-default-rtdb.firebaseio.com",
+      projectId: "ubacarona",
+      storageBucket: "ubacarona.firebasestorage.app",
+      messagingSenderId: "1032392073098",
+      appId: "1:1032392073098:web:f40d193f6e867fe0d9f273"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    let driverName = "";
+
+    window.addEventListener("DOMContentLoaded", async () => {
+      const saved = localStorage.getItem("driverName");
+      if (saved) {
+        driverName = saved;
+        const exists = await checkDriverExists(saved);
+        if (exists) showAssignmentSection();
+        else localStorage.removeItem("driverName");
+      }
+    });
+
+    async function checkDriverExists(name) {
+      const snapshot = await get(ref(db, "drivers"));
+      const drivers = snapshot.val() || {};
+      return Object.values(drivers).some(d => d.name === name);
+    }
+
+    window.registerOrLoginDriver = async () => {
+      driverName = document.getElementById("driverName").value.trim();
+      if (!driverName) return alert("Please enter your name.");
+      const exists = await checkDriverExists(driverName);
+      if (exists) {
+        localStorage.setItem("driverName", driverName);
+        showAssignmentSection();
+      } else {
+        const id = crypto.randomUUID();
+        await set(ref(db, `drivers/${id}`), {
+          name: driverName,
+          passengers: []
+        });
+        localStorage.setItem("driverName", driverName);
+        showAssignmentSection();
+      }
+    };
+
+    async function showAssignmentSection() {
+      document.getElementById("registration").style.display = "none";
+      document.getElementById("assignment").style.display = "block";
+      document.getElementById("driverWelcome").textContent = driverName;
+      loadPassengers();
+    }
+
+    async function loadPassengers() {
+      const snapshot = await get(ref(db));
+      const data = snapshot.val() || {};
+      const selectedList = document.getElementById("selectedPassengerList");
+      const notSelectedList = document.getElementById("notSelectedPassengerList");
+      selectedList.innerHTML = "";
+      notSelectedList.innerHTML = "";
+
+      const driverEntry = Object.entries(data.drivers || {}).find(([id, d]) => d.name === driverName);
+      const assignedNames = driverEntry ? driverEntry[1].passengers || [] : [];
+
+      Object.entries(data.passengers || {}).forEach(([id, p]) => {
+        const isAssigned = p.driver === driverName;
+        const div = document.createElement("div");
+        div.innerHTML = `<label><input type="checkbox" ${isAssigned ? "checked" : ""}> ${p.name}</label>`;
+        div.querySelector("input").addEventListener("change", async e => {
+          const assign = e.target.checked;
+          await update(ref(db, `passengers/${id}`), {
+            assigned: assign,
+            driver: assign ? driverName : null
+          });
+
+          const driverRef = ref(db, `drivers/${driverEntry[0]}`);
+          const updatedPassengers = assign
+            ? [...assignedNames, p.name]
+            : assignedNames.filter(n => n !== p.name);
+
+          await update(driverRef, { passengers: updatedPassengers });
+          loadPassengers();
+        });
+
+        const container = isAssigned ? selectedList : notSelectedList;
+        container.appendChild(div);
+      });
+    }
+
+    window.saveTravelDetails = async () => {
+      const time = document.getElementById("travelTime").value.trim();
+      const location = document.getElementById("travelLocation").value.trim();
+      const comments = document.getElementById("travelComments").value.trim();
+
+      const snap = await get(ref(db));
+      const all = snap.val() || {};
+      const myPassengers = Object.entries(all.passengers || {}).filter(([id, p]) => p.driver === driverName);
+      for (const [id] of myPassengers) {
+        await update(ref(db, `passengers/${id}`), {
+          time,
+          location,
+          comments
+        });
+      }
+      alert("Travel details saved for all passengers.");
+    };
+
+    window.toggleTravelDetails = () => {
+      const form = document.getElementById("travelDetailsForm");
+      const button = document.getElementById("toggleTravelBtn");
+      if (form.style.display === "none") {
+        form.style.display = "block";
+        button.textContent = "Close Travel Details";
+      } else {
+        form.style.display = "none";
+        button.textContent = "Edit Travel Details";
+      }
+    };
+
+    window.logout = () => {
+      localStorage.removeItem("driverName");
+      location.reload();
+    };
+  </script>
+</head>
+<body>
+  <button class="title-button" onclick="location.href='index.html'">dashboard</button>
+  <div id="registration">
+    <h2>Driver Login</h2>
+    <input type="text" id="driverName" placeholder="Enter your name" />
+    <button onclick="registerOrLoginDriver()">Register / Login</button>
+  </div>
+
+  <div id="assignment" style="display: none;">
+    <h2>Welcome, <span id="driverWelcome"></span>!</h2>
+
+    <div class="section">
+      <h3>Passenger Assignment</h3>
+      <div class="subsection">
+        <h4>✅ Selected Passengers</h4>
+        <div id="selectedPassengerList"></div>
+      </div>
+      <div class="subsection">
+        <h4>❌ Not Selected Passengers</h4>
+        <div id="notSelectedPassengerList"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Travel Details (applies to all passengers)</h3>
+      <button id="toggleTravelBtn" onclick="toggleTravelDetails()">Edit Travel Details</button>
+      <div id="travelDetailsForm" style="display:none;">
+        <label>Time: <input type="text" id="travelTime" placeholder="e.g. 14:30"></label><br>
+        <label>Location: <input type="text" id="travelLocation" placeholder="e.g. Main Street 123"></label><br>
+        <label>Comments: <input type="text" id="travelComments" placeholder="e.g. Be ready on time"></label><br>
+        <button onclick="saveTravelDetails()">Save Travel Details</button>
+      </div>
+    </div>
+
+    <button onclick="logout()">Logout</button>
+  </div>
+</body>
+</html>
