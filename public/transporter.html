@@ -168,7 +168,7 @@
     <button onclick="eraseAccount()">Eliminar cuenta</button>
   </div>
 
-<script>
+ <script>
     let driverName = "";
 
     window.onload = () => {
@@ -188,7 +188,7 @@
     function registerOrLoginDriver() {
       driverName = document.getElementById("driverName").value.trim();
       if (!driverName) {
-        alert("Por favor ingresa tu nombre.");
+        alert("por favor escribe tu nombre.");
         return;
       }
 
@@ -208,7 +208,7 @@
               localStorage.setItem("driverName", driverName);
               showAssignmentSection();
             } else {
-              alert("No se pudo registrar al conductor.");
+              alert("error al registrar al conductor.");
             }
           });
         }
@@ -238,15 +238,8 @@
           notSelectedList.innerHTML = "";
 
           const driver = data.drivers.find(d => d.name === driverName);
-          const assignedPassengers = driver ? driver.passengers : [];
-
-          const selectedPassengers = data.passengers
-            .filter(p => p.driver === driverName)
-            .map(p => ({ name: p.name, assigned: true }));
-
-          const notSelectedPassengers = data.passengers
-            .filter(p => !p.assigned)
-            .map(p => ({ name: p.name, assigned: false }));
+          const selectedPassengers = data.passengers.filter(p => p.driver === driverName);
+          const notSelectedPassengers = data.passengers.filter(p => !p.assigned);
 
           for (const p of selectedPassengers) {
             await addPassengerToList(p, selectedList, true);
@@ -268,8 +261,8 @@
       checkbox.checked = isAssigned;
 
       checkbox.addEventListener("change", () => {
-        const newContainer = isAssigned 
-          ? document.getElementById("notSelectedPassengerList") 
+        const newContainer = isAssigned
+          ? document.getElementById("notSelectedPassengerList")
           : document.getElementById("selectedPassengerList");
 
         passengerDiv.remove();
@@ -288,29 +281,27 @@
       detailsDiv.className = "passenger-details";
 
       try {
-        const res = await fetch(/api/passengers/${encodeURIComponent(passenger.name)}/personal);
+        const res = await fetch(`/api/passengers/${encodeURIComponent(passenger.name)}/personal`);
         if (res.ok) {
           const info = await res.json();
           let detailsHTML = "";
-
-          if (info.numPeople) detailsHTML += <div>👥 ${info.numPeople} personas</div>;
-          if (info.meetLocation) detailsHTML += <div>📍 ${info.meetLocation}</div>;
-          if (info.meetTime) detailsHTML += <div>⏰ ${info.meetTime}</div>;
-
+          if (info.numPeople) detailsHTML += `<div>👥 ${info.numPeople} personas</div>`;
+          if (info.meetLocation) detailsHTML += `<div>📍 ${info.meetLocation}</div>`;
+          if (info.meetTime) detailsHTML += `<div>⏰ ${info.meetTime}</div>`;
           if (detailsHTML) {
             detailsDiv.innerHTML = detailsHTML;
             passengerDiv.appendChild(detailsDiv);
           }
         }
       } catch (err) {
-        console.error("Error al obtener la información personal:", err);
+        console.error("Error al obtener información:", err);
       }
 
       container.appendChild(passengerDiv);
     }
 
     function movePassenger(passengerName, assign) {
-      fetch(/api/drivers/${encodeURIComponent(driverName)}/passengers, {
+      fetch(`/api/drivers/${encodeURIComponent(driverName)}/passengers`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ passengerName, assign })
@@ -318,7 +309,7 @@
       .then(res => res.json())
       .then(data => {
         if (!data.success) {
-          alert("No se pudo actualizar la asignación del pasajero.");
+          alert("error al actualizar la asignación.");
         }
       });
     }
@@ -328,10 +319,10 @@
       const button = document.getElementById("toggleTravelBtn");
       if (form.style.display === "none") {
         form.style.display = "block";
-        button.textContent = "Cerrar Detalles del Viaje";
+        button.textContent = "cerrar detalles del viaje";
       } else {
         form.style.display = "none";
-        button.textContent = "Editar Detalles del Viaje";
+        button.textContent = "editar detalles del viaje";
       }
     }
 
@@ -340,7 +331,7 @@
       const location = document.getElementById("travelLocation").value.trim();
       const comments = document.getElementById("travelComments").value.trim();
 
-      fetch(/api/drivers/${encodeURIComponent(driverName)}/travel, {
+      fetch(`/api/drivers/${encodeURIComponent(driverName)}/travel`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ time, location, comments })
@@ -348,9 +339,9 @@
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          alert("Detalles del viaje guardados para todos los pasajeros.");
+          alert("detalles del viaje guardados.");
         } else {
-          alert("No se pudieron guardar los detalles del viaje.");
+          alert("no se pudieron guardar los detalles.");
         }
       });
     }
@@ -361,21 +352,19 @@
     }
 
     function eraseAccount() {
-      if (!confirm("¿Estás seguro de que quieres eliminar tu cuenta? Esto eliminará todas tus asignaciones.")) {
-        return;
-      }
+      if (!confirm("¿estás seguro de eliminar tu cuenta?")) return;
 
-      fetch(/api/drivers/${encodeURIComponent(driverName)}, {
+      fetch(`/api/drivers/${encodeURIComponent(driverName)}`, {
         method: "DELETE"
       })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          alert("Tu cuenta ha sido eliminada.");
+          alert("cuenta eliminada.");
           localStorage.removeItem("driverName");
           location.reload();
         } else {
-          alert("Error: " + data.message);
+          alert("error: " + data.message);
         }
       });
     }
