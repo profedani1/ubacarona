@@ -84,167 +84,203 @@
     }
   </style>
 </head>
-<body>
-  <div class="container">
-    <div id="registration">
-      <h2>Registro de Conductor</h2>
-      <input id="driverName" placeholder="Ingresa tu nombre" />
-      <button onclick="registerOrLoginDriver()">Entrar</button>
-    </div>
 
-    <div id="assignment" style="display: none;">
-      <h2>Bienvenido, <span id="driverWelcome"></span></h2>
-
-      <h3>Pasajeros asignados</h3>
-      <div id="selectedPassengerList"></div>
-
-      <h3>Pasajeros no asignados</h3>
-      <div id="notSelectedPassengerList"></div>
-
-      <button id="toggleTravelBtn" onclick="toggleTravelDetails()">Editar Detalles de Viaje</button>
-
-      <form id="travelDetailsForm" style="display: none;">
-        <input id="travelTime" placeholder="Hora del viaje" />
-        <input id="travelLocation" placeholder="Lugar del viaje" />
-        <textarea id="travelComments" placeholder="Comentarios"></textarea>
-        <button type="button" onclick="saveTravelDetails()">Guardar Detalles</button>
-      </form>
-
-      <button onclick="logout()">Cerrar sesión</button>
-    </div>
+ <button class="title-button" onclick="loadInnerActivity('index.html')">dashboard</button>
+  <div id="registration">
+    <h2>Driver Login</h2>
+    <input type="text" id="driverName" placeholder="Enter your name" />
+    <button onclick="registerOrLoginDriver()">Register / Login</button>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-    import {
-      getDatabase, ref, get, set, update
-    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
+  <!-- Driver Dashboard -->
+  <div id="assignment" style="display: none;">
+    <h2>Welcome, <span id="driverWelcome"></span>!</h2>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyD8rSlUYQivypC11w1B4Txy7W7bW81RbP8",
-      authDomain: "ubacarona.firebaseapp.com",
-      databaseURL: "https://ubacarona-default-rtdb.firebaseio.com",
-      projectId: "ubacarona",
-      storageBucket: "ubacarona.firebasestorage.app",
-      messagingSenderId: "1032392073098",
-      appId: "1:1032392073098:web:f40d193f6e867fe0d9f273"
-    };
+    <div class="section">
+      <h3>Passenger Assignment</h3>
+      <div class="subsection">
+        <h4>✅ Selected Passengers</h4>
+        <div id="selectedPassengerList"></div>
+      </div>
+      <div class="subsection">
+        <h4>❌ Not Selected Passengers</h4>
+        <div id="notSelectedPassengerList"></div>
+      </div>
+    </div>
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    let driverName = "";
+    <div class="section">
+      <h3>Travel Details (applies to all passengers)</h3>
+      <button id="toggleTravelBtn" onclick="toggleTravelDetails()">Edit Travel Details</button>
+      <div id="travelDetailsForm">
+        <label>Time: <input type="text" id="travelTime" placeholder="e.g. 14:30"></label><br>
+        <label>Location: <input type="text" id="travelLocation" placeholder="e.g. Main Street 123"></label><br>
+        <label>Comments: <input type="text" id="travelComments" placeholder="e.g. Be ready on time"></label><br>
+        <button onclick="saveTravelDetails()">Save Travel Details</button>
+      </div>
+    </div>
 
-    window.addEventListener("DOMContentLoaded", async () => {
-      const saved = localStorage.getItem("driverName");
-      if (saved) {
-        driverName = saved;
-        const exists = await checkDriverExists(saved);
-        if (exists) showAssignmentSection();
-        else localStorage.removeItem("driverName");
-      }
-    });
+    <button onclick="logout()">Logout</button>
+    <button onclick="eraseAccount()">Delete Account</button>
+  </div>
 
-    async function checkDriverExists(name) {
-      const snapshot = await get(ref(db, "drivers"));
-      const drivers = snapshot.val() || {};
-      return Object.values(drivers).some(d => d.name === name);
-    }
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+  import {
+    getDatabase, ref, get, set, update, remove
+  } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
 
-    window.registerOrLoginDriver = async () => {
-      driverName = document.getElementById("driverName").value.trim();
-      if (!driverName) return alert("Por favor ingresa tu nombre.");
-      const exists = await checkDriverExists(driverName);
+  const firebaseConfig = {
+    apiKey: "AIzaSyD8rSlUYQivypC11w1B4Txy7W7bW81RbP8",
+    authDomain: "ubacarona.firebaseapp.com",
+    databaseURL: "https://ubacarona-default-rtdb.firebaseio.com",
+    projectId: "ubacarona",
+    storageBucket: "ubacarona.appspot.com",
+    messagingSenderId: "1032392073098",
+    appId: "1:1032392073098:web:f40d193f6e867fe0d9f273"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  let driverName = "";
+
+  window.onload = async () => {
+    const savedDriver = localStorage.getItem("driverName");
+    if (savedDriver) {
+      driverName = savedDriver;
+      const exists = await checkDriverExists(savedDriver);
       if (exists) {
-        localStorage.setItem("driverName", driverName);
         showAssignmentSection();
       } else {
-        const id = crypto.randomUUID();
-        await set(ref(db, `drivers/${id}`), {
-          name: driverName,
-          passengers: []
-        });
-        localStorage.setItem("driverName", driverName);
-        showAssignmentSection();
+        localStorage.removeItem("driverName");
       }
-    };
+    }
+  };
 
-    async function showAssignmentSection() {
-      document.getElementById("registration").style.display = "none";
-      document.getElementById("assignment").style.display = "flex";
-      document.getElementById("driverWelcome").textContent = driverName;
-      loadPassengers();
+  async function checkDriverExists(name) {
+    const snapshot = await get(ref(db, "drivers"));
+    const drivers = snapshot.val() || {};
+    return Object.values(drivers).some(driver => driver.name === name);
+  }
+
+  window.registerOrLoginDriver = async () => {
+    driverName = document.getElementById("driverName").value.trim();
+    if (!driverName) {
+      alert("Please enter your name.");
+      return;
     }
 
-    async function loadPassengers() {
-      const snapshot = await get(ref(db));
-      const data = snapshot.val() || {};
-      const selectedList = document.getElementById("selectedPassengerList");
-      const notSelectedList = document.getElementById("notSelectedPassengerList");
-      selectedList.innerHTML = "";
-      notSelectedList.innerHTML = "";
+    const exists = await checkDriverExists(driverName);
+    if (exists) {
+      localStorage.setItem("driverName", driverName);
+      showAssignmentSection();
+    } else {
+      const id = crypto.randomUUID();
+      await set(ref(db, `drivers/${id}`), {
+        name: driverName,
+        passengers: []
+      });
+      localStorage.setItem("driverName", driverName);
+      showAssignmentSection();
+    }
+  };
 
-      const driverEntry = Object.entries(data.drivers || {}).find(([id, d]) => d.name === driverName);
-      const assignedNames = driverEntry ? driverEntry[1].passengers || [] : [];
+  async function showAssignmentSection() {
+    document.getElementById("registration").style.display = "none";
+    document.getElementById("assignment").style.display = "block";
+    document.getElementById("driverWelcome").textContent = driverName;
+    loadPassengers();
+  }
 
-      Object.entries(data.passengers || {}).forEach(([id, p]) => {
-        const isAssigned = p.driver === driverName;
-        const div = document.createElement("div");
-        div.innerHTML = `<label><input type="checkbox" ${isAssigned ? "checked" : ""}> ${p.name}</label>`;
-        div.querySelector("input").addEventListener("change", async e => {
-          const assign = e.target.checked;
-          await update(ref(db, `passengers/${id}`), {
-            assigned: assign,
-            driver: assign ? driverName : null
-          });
+  async function loadPassengers() {
+    const snapshot = await get(ref(db));
+    const data = snapshot.val() || {};
+    const selectedList = document.getElementById("selectedPassengerList");
+    const notSelectedList = document.getElementById("notSelectedPassengerList");
+    selectedList.innerHTML = "";
+    notSelectedList.innerHTML = "";
 
-          const driverRef = ref(db, `drivers/${driverEntry[0]}`);
-          const updatedPassengers = assign
-            ? [...assignedNames, p.name]
-            : assignedNames.filter(n => n !== p.name);
+    const driverEntry = Object.entries(data.drivers || {}).find(([id, d]) => d.name === driverName);
+    const assignedNames = driverEntry ? driverEntry[1].passengers || [] : [];
 
-          await update(driverRef, { passengers: updatedPassengers });
-          loadPassengers();
+    Object.entries(data.passengers || {}).forEach(([id, p]) => {
+      const isAssigned = p.driver === driverName;
+      const div = document.createElement("div");
+      div.innerHTML = `<label><input type="checkbox" ${isAssigned ? "checked" : ""}> ${p.name}</label>`;
+      div.querySelector("input").addEventListener("change", async e => {
+        const assign = e.target.checked;
+
+        await update(ref(db, `passengers/${id}`), {
+          assigned: assign,
+          driver: assign ? driverName : null
         });
 
-        const container = isAssigned ? selectedList : notSelectedList;
-        container.appendChild(div);
+        const driverRef = ref(db, `drivers/${driverEntry[0]}`);
+        const updatedPassengers = assign
+          ? [...assignedNames, p.name]
+          : assignedNames.filter(n => n !== p.name);
+
+        await update(driverRef, { passengers: updatedPassengers });
+        loadPassengers();
+      });
+
+      const container = isAssigned ? selectedList : notSelectedList;
+      container.appendChild(div);
+    });
+  }
+
+  window.saveTravelDetails = async () => {
+    const time = document.getElementById("travelTime").value.trim();
+    const location = document.getElementById("travelLocation").value.trim();
+    const comments = document.getElementById("travelComments").value.trim();
+
+    const snap = await get(ref(db));
+    const all = snap.val() || {};
+    const myPassengers = Object.entries(all.passengers || {}).filter(([id, p]) => p.driver === driverName);
+    for (const [id] of myPassengers) {
+      await update(ref(db, `passengers/${id}`), {
+        time,
+        location,
+        comments
       });
     }
+    alert("Travel details saved for all passengers.");
+  };
 
-    window.saveTravelDetails = async () => {
-      const time = document.getElementById("travelTime").value.trim();
-      const location = document.getElementById("travelLocation").value.trim();
-      const comments = document.getElementById("travelComments").value.trim();
+  window.toggleTravelDetails = () => {
+    const form = document.getElementById("travelDetailsForm");
+    const button = document.getElementById("toggleTravelBtn");
+    if (form.style.display === "none") {
+      form.style.display = "block";
+      button.textContent = "Close Travel Details";
+    } else {
+      form.style.display = "none";
+      button.textContent = "Edit Travel Details";
+    }
+  };
 
-      const snap = await get(ref(db));
-      const all = snap.val() || {};
-      const myPassengers = Object.entries(all.passengers || {}).filter(([id, p]) => p.driver === driverName);
-      for (const [id] of myPassengers) {
-        await update(ref(db, `passengers/${id}`), {
-          time,
-          location,
-          comments
-        });
-      }
-      alert("Detalles de viaje guardados para todos los pasajeros.");
-    };
+  window.logout = () => {
+    localStorage.removeItem("driverName");
+    location.reload();
+  };
 
-    window.toggleTravelDetails = () => {
-      const form = document.getElementById("travelDetailsForm");
-      const button = document.getElementById("toggleTravelBtn");
-      if (form.style.display === "none") {
-        form.style.display = "flex";
-        button.textContent = "Cerrar Detalles de Viaje";
-      } else {
-        form.style.display = "none";
-        button.textContent = "Editar Detalles de Viaje";
-      }
-    };
+  window.eraseAccount = async () => {
+    if (!confirm("Are you sure you want to delete your account? This will remove all your assignments.")) {
+      return;
+    }
 
-    window.logout = () => {
+    const snapshot = await get(ref(db, "drivers"));
+    const drivers = snapshot.val() || {};
+    const driverEntry = Object.entries(drivers).find(([id, d]) => d.name === driverName);
+
+    if (driverEntry) {
+      await remove(ref(db, `drivers/${driverEntry[0]}`));
       localStorage.removeItem("driverName");
       location.reload();
-    };
-  </script>
+    } else {
+      alert("Error: Driver account not found.");
+    }
+  };
+</script>
+
 </body>
 </html>
