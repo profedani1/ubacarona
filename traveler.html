@@ -1,16 +1,123 @@
-<!-- traveler.html - Firebase Integrated Version -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Panel del Pasajero</title>
+  <title>Pasajero - Ubacarona</title>
   <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #fff;
+      color: #000;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      width: 90vw;
+      height: 90vh;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5vh;
+      padding: 2vh;
+      border: 2px solid #000;
+      border-radius: 1vh;
+      overflow: hidden;
+    }
+
+    input, button, textarea, select {
+      padding: 1.2vh;
+      font-size: 2vh;
+      border: 1px solid #000;
+      border-radius: 0.5vh;
+      width: 100%;
+    }
+
+    button {
+      background: #000;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    h2, h3 {
+      font-size: 2.4vh;
+    }
+
+    .box {
+      border: 1px solid #000;
+      padding: 1vh;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    #registration, #passengerDashboard {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5vh;
+    }
+
     .info-summary {
-      font-size: 1.1em;
+      font-size: 1.8vh;
       line-height: 1.6;
     }
+
+    .hidden {
+      display: none;
+    }
   </style>
+</head>
+<body>
+  <div class="container">
+    <button onclick="location.href='index.html'">Ir al Panel</button>
+
+    <div id="registration">
+      <h2>Registro de Pasajero</h2>
+      <input type="text" id="passengerName" placeholder="Ingresa tu nombre" />
+      <button onclick="registerOrLoginPassenger()">Entrar</button>
+    </div>
+
+    <div id="passengerDashboard" class="hidden">
+      <h2>Bienvenido(a), <span id="passengerWelcome"></span>!</h2>
+
+      <div class="box">
+        <h3>Datos Personales</h3>
+        <button id="toggleDetailsBtn" onclick="toggleEditMode()">AÑADIR DETALLES</button>
+        <div id="personalDetails" class="hidden">
+          <div id="infoSummary" class="info-summary hidden"></div>
+          <div id="infoForm" class="hidden">
+            <label>Número de personas:</label>
+            <input type="number" id="numPeople" placeholder="Ej: 2" />
+
+            <label>Ubicación de encuentro:</label>
+            <input type="text" id="meetLocation" placeholder="Ej: Calle Principal" />
+
+            <label>Hora deseada:</label>
+            <input type="time" id="meetTime" />
+
+            <button onclick="savePersonalInfo()">Guardar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="box">
+        <h3>Detalles del Viaje</h3>
+        <div id="travelContent"><p>Esperando asignación…</p></div>
+      </div>
+
+      <button onclick="logoutPassenger()">Cerrar Sesión</button>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import {
@@ -18,9 +125,7 @@
       ref,
       set,
       get,
-      update,
-      onValue,
-      child
+      update
     } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
 
     const firebaseConfig = {
@@ -64,7 +169,6 @@
     window.registerOrLoginPassenger = async () => {
       passengerName = document.getElementById("passengerName").value.trim();
       if (!passengerName) return alert("Por favor ingresa tu nombre.");
-
       const exists = await checkPassengerExists(passengerName);
       if (exists) {
         localStorage.setItem("passengerName", passengerName);
@@ -81,8 +185,8 @@
     };
 
     function showPassengerSection() {
-      document.getElementById("registration").style.display = "none";
-      document.getElementById("passengerDashboard").style.display = "block";
+      document.getElementById("registration").classList.add("hidden");
+      document.getElementById("passengerDashboard").classList.remove("hidden");
       document.getElementById("passengerWelcome").textContent = passengerName;
     }
 
@@ -93,43 +197,43 @@
       if (!entry) return;
 
       const info = entry[1];
-      const personalDetailsDiv = document.getElementById("personalDetails");
-      const toggleBtn = document.getElementById("toggleDetailsBtn");
-      const infoSummary = document.getElementById("infoSummary");
-      const infoForm = document.getElementById("infoForm");
+      const summary = document.getElementById("infoSummary");
+      const form = document.getElementById("infoForm");
+      const personal = document.getElementById("personalDetails");
+      const toggle = document.getElementById("toggleDetailsBtn");
 
-      personalDetailsDiv.style.display = "block";
+      personal.classList.remove("hidden");
 
       if (info.numPeople || info.meetLocation || info.meetTime) {
         hasPersonalInfo = true;
-        infoSummary.innerHTML = `
+        summary.innerHTML = `
           👥 ${info.numPeople || "N/D"} personas<br>
           📍 ${info.meetLocation || "N/D"}<br>
           ⏰ ${info.meetTime || "N/D"}`;
-        infoSummary.style.display = "block";
-        infoForm.style.display = "none";
-        toggleBtn.textContent = "EDITAR DETALLES";
+        summary.classList.remove("hidden");
+        form.classList.add("hidden");
+        toggle.textContent = "EDITAR DETALLES";
       } else {
         hasPersonalInfo = false;
-        infoSummary.style.display = "none";
-        infoForm.style.display = "none";
-        toggleBtn.textContent = "AÑADIR DETALLES";
+        summary.classList.add("hidden");
+        form.classList.add("hidden");
+        toggle.textContent = "AÑADIR DETALLES";
       }
     }
 
     window.toggleEditMode = () => {
-      const infoSummary = document.getElementById("infoSummary");
-      const infoForm = document.getElementById("infoForm");
-      const toggleBtn = document.getElementById("toggleDetailsBtn");
+      const summary = document.getElementById("infoSummary");
+      const form = document.getElementById("infoForm");
+      const toggle = document.getElementById("toggleDetailsBtn");
 
-      if (toggleBtn.textContent === "AÑADIR DETALLES" || toggleBtn.textContent === "EDITAR DETALLES") {
-        infoSummary.style.display = "none";
-        infoForm.style.display = "block";
-        toggleBtn.textContent = "CANCELAR";
+      if (form.classList.contains("hidden")) {
+        form.classList.remove("hidden");
+        summary.classList.add("hidden");
+        toggle.textContent = "CANCELAR";
       } else {
-        infoSummary.style.display = "block";
-        infoForm.style.display = "none";
-        toggleBtn.textContent = "EDITAR DETALLES";
+        form.classList.add("hidden");
+        summary.classList.remove("hidden");
+        toggle.textContent = "EDITAR DETALLES";
       }
     };
 
@@ -175,45 +279,5 @@
       location.reload();
     };
   </script>
-</head>
-<body>
-  <button class="title-button" onclick="location.href='index.html'">Panel</button>
-  <div id="registration">
-    <input type="text" id="passengerName" placeholder="Ingresa tu nombre">
-    <button onclick="registerOrLoginPassenger()">Registrar / Iniciar sesión</button>
-  </div>
-
-  <div id="passengerDashboard" style="display:none;">
-    <h2>Bienvenido(a), <span id="passengerWelcome"></span>!</h2>
-
-    <div id="personalDetailsContainer" style="margin-top: 20px;">
-      <button id="toggleDetailsBtn" onclick="toggleEditMode()">AÑADIR DETALLES</button>
-
-      <div id="personalDetails" style="display:none; border: 1px solid #ccc; padding: 10px; margin-top:10px;">
-        <h3>Tus Datos Personales</h3>
-
-        <div id="infoSummary" class="info-summary" style="display:none;"></div>
-
-        <div id="infoForm" style="display:none;">
-          <label>Número de personas que van:</label>
-          <input type="number" id="numPeople" placeholder="ej.: 2"><br><br>
-          <label>Ubicación deseada para el encuentro:</label>
-          <input type="text" id="meetLocation" placeholder="ej.: Calle Principal"><br><br>
-          <label>Hora deseada para el encuentro:</label>
-          <input type="time" id="meetTime"><br><br>
-          <button id="saveBtn" onclick="savePersonalInfo()">Guardar Datos Personales</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="travelDetails" style="margin-top: 20px; border: 1px solid #ccc; padding: 10px;">
-      <h3>Tus Detalles del Viaje</h3>
-      <div id="travelContent">
-        <p>Esperando asignación…</p>
-      </div>
-    </div>
-
-    <button onclick="logoutPassenger()">Cerrar Sesión</button>
-  </div>
 </body>
 </html>
