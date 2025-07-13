@@ -1,50 +1,123 @@
-<!-- transporter.html - Firebase Integrated Version -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Driver Dashboard</title>
+  <title>Ubacarona - Panel de Conductor</title>
   <style>
-    body {
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
       font-family: Arial, sans-serif;
-      margin: 20px;
     }
-    #registration, #assignment {
-      max-width: 600px;
-      margin: auto;
+
+    body {
+      background-color: #ffffff;
+      color: #000000;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
-    .section {
-      margin: 15px 0;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      background: #f9f9f9;
+
+    .container {
+      width: 90vw;
+      height: 90vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 2px solid black;
+      padding: 2vh;
+      border-radius: 1vh;
+      overflow: hidden;
     }
-    .subsection {
-      margin-top: 10px;
-      padding: 8px;
-      border: 1px dashed #ccc;
-      border-radius: 4px;
-      background: #f1f1f1;
+
+    #registration,
+    #assignment {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2vh;
     }
+
+    input,
+    textarea {
+      padding: 1vh;
+      font-size: 1.8vh;
+      width: 100%;
+    }
+
     button {
-      margin-top: 10px;
-      padding: 8px 12px;
-      background-color: #007BFF;
-      color: white;
-      border: none;
-      border-radius: 4px;
+      padding: 1.5vh;
+      font-size: 2vh;
       cursor: pointer;
+      background-color: #000;
+      color: #fff;
+      border: none;
+      border-radius: 0.5vh;
     }
-    button:hover {
-      background-color: #0056b3;
+
+    h2, h3 {
+      margin-bottom: 1vh;
+    }
+
+    #selectedPassengerList,
+    #notSelectedPassengerList {
+      flex: 1;
+      overflow-y: auto;
+      border: 1px solid #000;
+      padding: 1vh;
+      margin-bottom: 1vh;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5vh;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1vh;
     }
   </style>
+</head>
+<body>
+  <div class="container">
+    <div id="registration">
+      <h2>Registro de Conductor</h2>
+      <input id="driverName" placeholder="Ingresa tu nombre" />
+      <button onclick="registerOrLoginDriver()">Entrar</button>
+    </div>
+
+    <div id="assignment" style="display: none;">
+      <h2>Bienvenido, <span id="driverWelcome"></span></h2>
+
+      <h3>Pasajeros asignados</h3>
+      <div id="selectedPassengerList"></div>
+
+      <h3>Pasajeros no asignados</h3>
+      <div id="notSelectedPassengerList"></div>
+
+      <button id="toggleTravelBtn" onclick="toggleTravelDetails()">Editar Detalles de Viaje</button>
+
+      <form id="travelDetailsForm" style="display: none;">
+        <input id="travelTime" placeholder="Hora del viaje" />
+        <input id="travelLocation" placeholder="Lugar del viaje" />
+        <textarea id="travelComments" placeholder="Comentarios"></textarea>
+        <button type="button" onclick="saveTravelDetails()">Guardar Detalles</button>
+      </form>
+
+      <button onclick="logout()">Cerrar sesión</button>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import {
-      getDatabase, ref, get, set, update, onValue, push
+      getDatabase, ref, get, set, update
     } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
 
     const firebaseConfig = {
@@ -79,7 +152,7 @@
 
     window.registerOrLoginDriver = async () => {
       driverName = document.getElementById("driverName").value.trim();
-      if (!driverName) return alert("Please enter your name.");
+      if (!driverName) return alert("Por favor ingresa tu nombre.");
       const exists = await checkDriverExists(driverName);
       if (exists) {
         localStorage.setItem("driverName", driverName);
@@ -97,7 +170,7 @@
 
     async function showAssignmentSection() {
       document.getElementById("registration").style.display = "none";
-      document.getElementById("assignment").style.display = "block";
+      document.getElementById("assignment").style.display = "flex";
       document.getElementById("driverWelcome").textContent = driverName;
       loadPassengers();
     }
@@ -153,18 +226,18 @@
           comments
         });
       }
-      alert("Travel details saved for all passengers.");
+      alert("Detalles de viaje guardados para todos los pasajeros.");
     };
 
     window.toggleTravelDetails = () => {
       const form = document.getElementById("travelDetailsForm");
       const button = document.getElementById("toggleTravelBtn");
       if (form.style.display === "none") {
-        form.style.display = "block";
-        button.textContent = "Close Travel Details";
+        form.style.display = "flex";
+        button.textContent = "Cerrar Detalles de Viaje";
       } else {
         form.style.display = "none";
-        button.textContent = "Edit Travel Details";
+        button.textContent = "Editar Detalles de Viaje";
       }
     };
 
@@ -173,42 +246,5 @@
       location.reload();
     };
   </script>
-</head>
-<body>
-  <button class="title-button" onclick="location.href='index.html'">dashboard</button>
-  <div id="registration">
-    <h2>Driver Login</h2>
-    <input type="text" id="driverName" placeholder="Enter your name" />
-    <button onclick="registerOrLoginDriver()">Register / Login</button>
-  </div>
-
-  <div id="assignment" style="display: none;">
-    <h2>Welcome, <span id="driverWelcome"></span>!</h2>
-
-    <div class="section">
-      <h3>Passenger Assignment</h3>
-      <div class="subsection">
-        <h4>✅ Selected Passengers</h4>
-        <div id="selectedPassengerList"></div>
-      </div>
-      <div class="subsection">
-        <h4>❌ Not Selected Passengers</h4>
-        <div id="notSelectedPassengerList"></div>
-      </div>
-    </div>
-
-    <div class="section">
-      <h3>Travel Details (applies to all passengers)</h3>
-      <button id="toggleTravelBtn" onclick="toggleTravelDetails()">Edit Travel Details</button>
-      <div id="travelDetailsForm" style="display:none;">
-        <label>Time: <input type="text" id="travelTime" placeholder="e.g. 14:30"></label><br>
-        <label>Location: <input type="text" id="travelLocation" placeholder="e.g. Main Street 123"></label><br>
-        <label>Comments: <input type="text" id="travelComments" placeholder="e.g. Be ready on time"></label><br>
-        <button onclick="saveTravelDetails()">Save Travel Details</button>
-      </div>
-    </div>
-
-    <button onclick="logout()">Logout</button>
-  </div>
 </body>
 </html>
