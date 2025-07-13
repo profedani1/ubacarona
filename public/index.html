@@ -1,0 +1,87 @@
+<!-- index.html - Firebase Integrated Version -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel de Viaje</title>
+  <style>
+    .trip-info {
+      border: 2px solid #ccc;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+    }
+    .trip-info h2 {
+      margin-top: 0;
+    }
+  </style>
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD8rSlUYQivypC11w1B4Txy7W7bW81RbP8",
+      authDomain: "ubacarona.firebaseapp.com",
+      databaseURL: "https://ubacarona-default-rtdb.firebaseio.com",
+      projectId: "ubacarona",
+      storageBucket: "ubacarona.firebasestorage.app",
+      messagingSenderId: "1032392073098",
+      appId: "1:1032392073098:web:f40d193f6e867fe0d9f273",
+      measurementId: "G-6S2YM6VHHV"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const destinationEl = document.getElementById("destination");
+      const arrivalTimeEl = document.getElementById("arrivalTime");
+      const tripDateEl = document.getElementById("tripDate");
+      const dashboardEl = document.getElementById("dashboard");
+
+      const tripRef = ref(db, 'trip');
+      onValue(tripRef, (snapshot) => {
+        const trip = snapshot.val() || {};
+        destinationEl.textContent = trip.destination || "No definido";
+        arrivalTimeEl.textContent = trip.arrivalTime || "No definido";
+        tripDateEl.textContent = trip.date || "No definido";
+      });
+
+      const dataRef = ref(db);
+      onValue(dataRef, (snapshot) => {
+        const data = snapshot.val() || { drivers: [], passengers: [] };
+        dashboardEl.innerHTML = "<h2>Conductores y Pasajeros</h2>";
+
+        (data.drivers || []).forEach(driver => {
+          const div = document.createElement("div");
+          div.innerHTML = `<strong>${driver.name}</strong>: ${(driver.passengers || []).join(", ") || "Sin pasajeros"}`;
+          dashboardEl.appendChild(div);
+        });
+
+        dashboardEl.innerHTML += "<h2>Pasajeros en espera</h2>";
+        (data.passengers || []).filter(p => !p.assigned).forEach(p => {
+          const div = document.createElement("div");
+          div.textContent = p.name;
+          dashboardEl.appendChild(div);
+        });
+      });
+    });
+  </script>
+</head>
+<body>
+  <div id="tripInfo" class="trip-info">
+    <h2>Información del Viaje</h2>
+    <p><strong>Destino:</strong> <span id="destination">Cargando...</span></p>
+    <p><strong>Hora de llegada:</strong> <span id="arrivalTime">Cargando...</span></p>
+    <p><strong>Fecha:</strong> <span id="tripDate">Cargando...</span></p>
+  </div>
+
+  <div id="dashboard"></div>
+
+  <button class="title-button" onclick="location.href='transporter.html'">CONDUCTOR</button>
+  <button class="title-button" onclick="location.href='traveler.html'">PASAJERO</button>
+</body>
+</html>
