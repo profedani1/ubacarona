@@ -1,59 +1,110 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Edit Trip Details</title>
+  <title>Editar Detalles del Viaje</title>
   <style>
-    body {
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
       font-family: Arial, sans-serif;
-      margin: 20px;
-      background-color: #f4f4f9;
     }
+
+    body {
+      height: 100vh;
+      width: 100vw;
+      background-color: #fff;
+      color: #000;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 3vh 4vw;
+    }
+
     h1 {
-      color: #333;
-      margin-bottom: 20px;
+      font-size: 3vh;
+      margin-bottom: 3vh;
     }
+
     .form-group {
-      margin-bottom: 15px;
+      width: 100%;
+      max-width: 500px;
+      margin-bottom: 2vh;
     }
+
     label {
       font-weight: bold;
       display: block;
-      margin-bottom: 5px;
+      margin-bottom: 0.5vh;
+      font-size: 2vh;
     }
+
     input[type="text"],
-    input[type="time"] {
+    input[type="time"],
+    input[type="date"] {
       width: 100%;
-      padding: 8px;
+      padding: 1.5vh;
+      font-size: 2vh;
       border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
+      border-radius: 1vh;
     }
+
     button {
-      background-color: #007bff;
+      width: 100%;
+      max-width: 500px;
+      padding: 2vh;
+      font-size: 2vh;
+      background-color: #000;
       color: #fff;
       border: none;
-      padding: 10px 15px;
-      border-radius: 4px;
+      border-radius: 1vh;
       cursor: pointer;
-      font-size: 16px;
+      transition: background 0.3s ease;
     }
+
     button:hover {
-      background-color: #0056b3;
+      background-color: #444;
     }
+
+    #message {
+      margin-top: 2vh;
+      font-size: 2vh;
+      text-align: center;
+    }
+
     .success-message {
       color: green;
-      margin-top: 10px;
     }
+
     .error-message {
       color: red;
-      margin-top: 10px;
-    }
-    #calendar {
-      margin-top: 15px;
     }
   </style>
+</head>
+<body>
+  <h1>Editar Detalles del Viaje</h1>
+
+  <div class="form-group">
+    <label for="destination">Destino:</label>
+    <input type="text" id="destination" placeholder="Ingresa el destino" />
+  </div>
+
+  <div class="form-group">
+    <label for="arrivalTime">Hora de llegada:</label>
+    <input type="time" id="arrivalTime" />
+  </div>
+
+  <div class="form-group">
+    <label for="tripDate">Fecha del viaje:</label>
+    <input type="date" id="tripDate" />
+  </div>
+
+  <button onclick="saveTrip()">Guardar Detalles del Viaje</button>
+  <p id="message"></p>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import {
@@ -73,65 +124,42 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    let selectedDate = null;
+    const destinationInput = document.getElementById("destination");
+    const arrivalTimeInput = document.getElementById("arrivalTime");
+    const tripDateInput = document.getElementById("tripDate");
+    const messageEl = document.getElementById("message");
 
     window.addEventListener("DOMContentLoaded", async () => {
-      const calendar = document.createElement("input");
-      calendar.type = "date";
-      calendar.id = "tripDate";
-      calendar.addEventListener("change", () => {
-        selectedDate = calendar.value;
-      });
-      document.getElementById("calendar").appendChild(calendar);
-
-      const snap = await get(ref(db, "trip"));
-      const trip = snap.val() || {};
-      document.getElementById("destination").value = trip.destination || "";
-      document.getElementById("arrivalTime").value = trip.arrivalTime || "";
-      calendar.value = trip.date || "";
-      selectedDate = trip.date || "";
+      try {
+        const snap = await get(ref(db, "trip"));
+        const trip = snap.val() || {};
+        destinationInput.value = trip.destination || "";
+        arrivalTimeInput.value = trip.arrivalTime || "";
+        tripDateInput.value = trip.date || "";
+      } catch (err) {
+        messageEl.textContent = "Error al cargar los datos.";
+        messageEl.className = "error-message";
+      }
     });
 
     window.saveTrip = async () => {
-      const destination = document.getElementById("destination").value;
-      const arrivalTime = document.getElementById("arrivalTime").value;
+      const destination = destinationInput.value;
+      const arrivalTime = arrivalTimeInput.value;
+      const tripDate = tripDateInput.value;
 
       try {
         await update(ref(db, "trip"), {
           destination,
           arrivalTime,
-          date: selectedDate
+          date: tripDate
         });
-        const msg = document.getElementById("message");
-        msg.textContent = "Trip details saved successfully!";
-        msg.className = "success-message";
+        messageEl.textContent = "¡Datos del viaje guardados exitosamente!";
+        messageEl.className = "success-message";
       } catch (err) {
-        const msg = document.getElementById("message");
-        msg.textContent = "Error saving trip data.";
-        msg.className = "error-message";
+        messageEl.textContent = "Error al guardar los datos.";
+        messageEl.className = "error-message";
       }
     };
   </script>
-</head>
-<body>
-  <h1>Edit Trip Details</h1>
-
-  <div class="form-group">
-    <label for="destination">Destination:</label>
-    <input type="text" id="destination" placeholder="Enter destination" />
-  </div>
-
-  <div class="form-group">
-    <label for="arrivalTime">Arrival Time:</label>
-    <input type="time" id="arrivalTime" />
-  </div>
-
-  <div class="form-group">
-    <label>Date:</label>
-    <div id="calendar"></div>
-  </div>
-
-  <button onclick="saveTrip()">Save Trip Details</button>
-  <p id="message"></p>
 </body>
 </html>
