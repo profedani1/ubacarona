@@ -97,6 +97,105 @@
     <button class="title-button" onclick="location.href='traveler.html'">PASAJERO</button>
   </div>
 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel de Viaje</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #fff;
+      color: #000;
+      padding: 2vh 3vw;
+    }
+
+    #tripInfo {
+      border: 2px solid #000;
+      padding: 2vh;
+      width: 100%;
+      border-radius: 1vh;
+      background-color: #f0f0f0;
+    }
+
+    #dashboard {
+      width: 100%;
+      flex: 1;
+      margin-top: 2vh;
+      overflow-y: auto;
+      border: 2px solid #000;
+      border-radius: 1vh;
+      padding: 2vh;
+      background-color: #f9f9f9;
+    }
+
+    h2 {
+      font-size: 2.5vh;
+      margin-bottom: 1vh;
+    }
+
+    p, div {
+      font-size: 2vh;
+      margin: 0.8vh 0;
+    }
+
+    .title-button {
+      width: 100%;
+      padding: 2vh;
+      margin-top: 2vh;
+      font-size: 2vh;
+      background-color: #000;
+      color: #fff;
+      border: none;
+      border-radius: 1vh;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .title-button:hover {
+      background-color: #444;
+    }
+
+    .button-container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1vh;
+      margin-top: 2vh;
+    }
+  </style>
+</head>
+<body>
+  <div id="tripInfo">
+    <h2>Información del Viaje</h2>
+    <p><strong>Destino:</strong> <span id="destination">Cargando...</span></p>
+    <p><strong>Hora de llegada:</strong> <span id="arrivalTime">Cargando...</span></p>
+    <p><strong>Fecha:</strong> <span id="tripDate">Cargando...</span></p>
+  </div>
+
+  <div id="dashboard">
+    <h2>Conductores y Pasajeros</h2>
+    <p>Cargando datos...</p>
+  </div>
+
+  <div class="button-container">
+    <button class="title-button" onclick="location.href='transporter.html'">CONDUCTOR</button>
+    <button class="title-button" onclick="location.href='traveler.html'">PASAJERO</button>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
@@ -162,5 +261,7 @@
       });
     });
   </script>
+</body>
+</html>
 </body>
 </html>
