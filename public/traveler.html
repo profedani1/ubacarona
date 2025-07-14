@@ -119,6 +119,8 @@
     </div>
 
     <button onclick="logoutPassenger()">Cerrar Sesión</button>
+    <button onclick="deletePassengerAccount()">Eliminar Cuenta</button>
+
   </div>
 </div>
 
@@ -316,6 +318,44 @@
     localStorage.removeItem("passengerName");
     location.reload();
   };
+  window.deletePassengerAccount = async () => {
+  if (!confirm("¿Estás seguro de que deseas eliminar tu cuenta? Esta acción es irreversible.")) return;
+
+  const snapshot = await get(ref(db, "passengers"));
+  const passengers = snapshot.val() || {};
+  const entry = Object.entries(passengers).find(([id, p]) => p.name === passengerName);
+
+  if (!entry) {
+    alert("Cuenta no encontrada.");
+    return;
+  }
+
+  const id = entry[0];
+
+  await update(ref(db, "passengers/" + id), {
+    name: null,
+    assigned: null,
+    driver: null,
+    numPeople: null,
+    meetLocation: null,
+    meetTime: null,
+    time: null,
+    location: null,
+    comments: null
+  });
+
+  // También puedes hacer un remove completo en vez de limpiar los campos:
+  // await remove(ref(db, "passengers/" + id));
+
+  await update(ref(db), {
+    [`passengers/${id}`]: null
+  });
+
+  localStorage.removeItem("passengerName");
+  alert("Cuenta eliminada correctamente.");
+  location.reload();
+};
+
 </script>
 </body>
 </html>
