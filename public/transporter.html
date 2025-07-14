@@ -271,23 +271,41 @@
     location.reload();
   };
 
-  window.eraseAccount = async () => {
-    if (!confirm("¿Estás seguro de eliminar tu cuenta? Se borrarán tus asignaciones.")) {
-      return;
-    }
+window.eraseAccount = async () => {
+  if (!confirm("¿Estás seguro de eliminar tu cuenta? Todos los pasajeros asignados quedarán disponibles.")) {
+    return;
+  }
 
-    const snapshot = await get(ref(db, "drivers"));
-    const drivers = snapshot.val() || {};
-    const driverEntry = Object.entries(drivers).find(([id, d]) => d.name === driverName);
+  const snapshot = await get(ref(db));
+  const data = snapshot.val() || {};
+  const drivers = data.drivers || {};
+  const passengers = data.passengers || {};
 
-    if (driverEntry) {
-      await remove(ref(db, `drivers/${driverEntry[0]}`));
-      localStorage.removeItem("driverName");
-      location.reload();
-    } else {
-      alert("Error: Cuenta de conductor no encontrada.");
-    }
-  };
+  const driverEntry = Object.entries(drivers).find(([id, d]) => d.name === driverName);
+
+  if (driverEntry) {
+    const driverId = driverEntry[0];
+
+    // Desasignar pasajeros vinculados a este conductor
+    const updates = {};
+    Object.entries(passengers).forEach(([pid, passenger]) => {
+      if (passenger.driver === driverName) {
+        updates[`passengers/${pid}/driver`] = null;
+        updates[`passengers/${pid}/assigned`] = false;
+      }
+    });
+
+    // Aplicar actualizaciones y eliminar conductor
+    await update(ref(db), updates);
+    await remove(ref(db, `drivers/${driverId}`));
+
+    localStorage.removeItem("driverName");
+    location.reload();
+  } else {
+    alert("Error: Cuenta de conductor no encontrada.");
+  }
+};
+
 </script>
 </body>
 </html>
