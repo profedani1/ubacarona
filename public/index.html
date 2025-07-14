@@ -98,7 +98,7 @@
     <button class="title-button" onclick="location.href='traveler.html'">PASAJERO</button>
   </div>
 
-  <script type="module">
+    <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
 
@@ -107,7 +107,7 @@
       authDomain: "ubacarona.firebaseapp.com",
       databaseURL: "https://ubacarona-default-rtdb.firebaseio.com",
       projectId: "ubacarona",
-      storageBucket: "ubacarona.firebasestorage.app",
+      storageBucket: "ubacarona.appspot.com",
       messagingSenderId: "1032392073098",
       appId: "1:1032392073098:web:f40d193f6e867fe0d9f273",
       measurementId: "G-6S2YM6VHHV"
@@ -122,40 +122,53 @@
       const tripDateEl = document.getElementById("tripDate");
       const dashboardEl = document.getElementById("dashboard");
 
-      const tripRef = ref(db, 'trip');
-      onValue(tripRef, (snapshot) => {
+      onValue(ref(db, 'trip'), snapshot => {
         const trip = snapshot.val() || {};
         destinationEl.textContent = trip.destination || "No definido";
         arrivalTimeEl.textContent = trip.arrivalTime || "No definido";
         tripDateEl.textContent = trip.date || "No definido";
       });
 
-      const dataRef = ref(db);
-      onValue(dataRef, (snapshot) => {
+      onValue(ref(db), snapshot => {
         const data = snapshot.val() || {};
-        dashboardEl.innerHTML = "<h2>Conductores y Pasajeros</h2>";
+        dashboardEl.innerHTML = "";
 
-        const drivers = Object.values(data.drivers || {});
-        const passengers = Object.values(data.passengers || {});
+        // Conductores
+        const drivers = Object.entries(data.drivers || {});
+        const driversTitle = document.createElement("h2");
+        driversTitle.textContent = "Conductores y Pasajeros";
+        dashboardEl.appendChild(driversTitle);
 
         if (drivers.length === 0) {
-          dashboardEl.innerHTML += "<p>No hay conductores registrados.</p>";
+          dashboardEl.appendChild(document.createElement("p")).textContent = "No hay conductores registrados.";
         } else {
-          drivers.forEach(driver => {
+          drivers.forEach(([did, d]) => {
             const div = document.createElement("div");
-            div.innerHTML = `<strong>${driver.name}</strong>: ${(driver.passengers || []).join(", ") || "Sin pasajeros"}`;
+            div.classList.add("driver");
+            const assignedList = (d.passengers || []).filter(n => {
+              // Asegúrate de que pasajeros realmente existan
+              return Object.values(data.passengers || {}).some(p => p.name === n);
+            });
+            div.innerHTML = `<strong>${d.name}</strong>: ${assignedList.join(", ") || "Sin pasajeros"}`;
             dashboardEl.appendChild(div);
           });
         }
 
-        const unassigned = passengers.filter(p => !p.assigned);
-        dashboardEl.innerHTML += "<h2>Pasajeros en espera</h2>";
+        // Pasajeros no asignados y existentes
+        const unassigned = Object.entries(data.passengers || {}).filter(([pid, p]) => {
+          return p && p.name && !p.assigned;
+        });
+
+        const passTitle = document.createElement("h2");
+        passTitle.textContent = "Pasajeros en espera";
+        dashboardEl.appendChild(passTitle);
 
         if (unassigned.length === 0) {
-          dashboardEl.innerHTML += "<p>Ningún pasajero en espera.</p>";
+          dashboardEl.appendChild(document.createElement("p")).textContent = "Ningún pasajero en espera.";
         } else {
-          unassigned.forEach(p => {
+          unassigned.forEach(([pid, p]) => {
             const div = document.createElement("div");
+            div.classList.add("passenger");
             div.textContent = p.name;
             dashboardEl.appendChild(div);
           });
@@ -163,6 +176,7 @@
       });
     });
   </script>
+
 </body>
 </html>
 </body>
