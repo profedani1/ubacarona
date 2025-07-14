@@ -143,22 +143,32 @@
   let passengerName = "";
   let hasPersonalInfo = false;
 
-  window.addEventListener("DOMContentLoaded", async () => {
-    const saved = localStorage.getItem("passengerName");
-    if (saved) {
-      passengerName = saved;
-      const exists = await checkPassengerExists(saved);
-      if (exists) {
-        showPassengerSection();
-        fetchPersonalInfo(passengerName);
-        fetchTravelDetails(passengerName);
-        setInterval(() => fetchTravelDetails(passengerName), 5000);
-      } else {
-        localStorage.removeItem("passengerName");
-        document.getElementById("registration").classList.remove("hidden");
-      }
+window.addEventListener("DOMContentLoaded", async () => {
+  const registrationDiv = document.getElementById("registration");
+  const dashboardDiv = document.getElementById("passengerDashboard");
+
+  const saved = localStorage.getItem("passengerName");
+  if (saved) {
+    passengerName = saved;
+    const exists = await checkPassengerExists(saved);
+    if (exists) {
+      showPassengerSection();
+      fetchPersonalInfo(passengerName);
+      fetchTravelDetails(passengerName);
+      setInterval(() => fetchTravelDetails(passengerName), 5000);
+      registrationDiv.classList.add("hidden");
+      dashboardDiv.classList.remove("hidden");
+    } else {
+      localStorage.removeItem("passengerName");
+      registrationDiv.classList.remove("hidden");
+      dashboardDiv.classList.add("hidden");
     }
-  });
+  } else {
+    registrationDiv.classList.remove("hidden");
+    dashboardDiv.classList.add("hidden");
+  }
+});
+
 
   async function checkPassengerExists(name) {
     const snapshot = await get(ref(db, "passengers"));
