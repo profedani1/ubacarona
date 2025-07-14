@@ -105,12 +105,13 @@
 
   <button onclick="saveTrip()">Guardar Detalles del Viaje</button>
   <button onclick="restartTrip()">🔄 Reiniciar Viaje</button>
+  <button onclick="window.location.href='index.html'">Volver al Panel</button>
   <p id="message"></p>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import {
-      getDatabase, ref, get, update, set
+      getDatabase, ref, get, set, update, remove
     } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
 
     const firebaseConfig = {
@@ -164,35 +165,18 @@
     };
 
     window.restartTrip = async () => {
-      if (!confirm("¿Estás seguro de que quieres reiniciar el viaje? Esto eliminará todos los detalles anteriores.")) {
-        return;
-      }
+      if (!confirm("¿Estás seguro de que quieres reiniciar el viaje? Se eliminarán todos los pasajeros, conductores y datos de viaje.")) return;
 
       try {
-        await set(ref(db, "trip"), {
-          destination: "",
-          arrivalTime: "",
-          date: ""
-        });
-
-        const passengersSnap = await get(ref(db, "passengers"));
-        const passengers = passengersSnap.val() || {};
-
-        for (const [id, p] of Object.entries(passengers)) {
-          await update(ref(db, `passengers/${id}`), {
-            assigned: false,
-            driver: null,
-            time: null,
-            location: null,
-            comments: null
-          });
-        }
+        await remove(ref(db, "trip"));
+        await remove(ref(db, "passengers"));
+        await remove(ref(db, "drivers"));
 
         destinationInput.value = "";
         arrivalTimeInput.value = "";
         tripDateInput.value = "";
 
-        messageEl.textContent = "🚨 Viaje reiniciado correctamente.";
+        messageEl.textContent = "🚨 Viaje reiniciado correctamente. Toda la información ha sido eliminada.";
         messageEl.className = "success-message";
       } catch (err) {
         messageEl.textContent = "Error al reiniciar el viaje.";
