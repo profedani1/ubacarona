@@ -164,20 +164,21 @@
     }
   });
 
-  function showRegisterForm() {
+  window.showRegisterForm = function () {
     document.getElementById("initialOptions").classList.add("hidden");
     document.getElementById("registerForm").classList.remove("hidden");
-  }
+  };
 
-  function showLoginForm() {
+  window.showLoginForm = function () {
     document.getElementById("initialOptions").classList.add("hidden");
     document.getElementById("loginForm").classList.remove("hidden");
-  }
+  };
 
-  function backToInitial() {
-    ["registerForm", "loginForm"].forEach(id => document.getElementById(id).classList.add("hidden"));
+  window.backToInitial = function () {
+    document.getElementById("registerForm").classList.add("hidden");
+    document.getElementById("loginForm").classList.add("hidden");
     document.getElementById("initialOptions").classList.remove("hidden");
-  }
+  };
 
   function showPassengerSection() {
     ["initialOptions", "registerForm", "loginForm"].forEach(id => document.getElementById(id).classList.add("hidden"));
