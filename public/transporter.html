@@ -75,7 +75,11 @@
       display: block;
       margin-bottom: 0.5vh;
     }
-
+#toggleTravelBtn{
+      background-color: darkred;
+      color: #fff;
+      cursor: pointer;
+    }
     form {
       display: flex;
       flex-direction: column;
@@ -109,7 +113,7 @@
     </div>
 
     <div class="section">
-      <h3>Detalles del Viaje (para todos los pasajeros)</h3>
+     
       <button id="toggleTravelBtn" onclick="toggleTravelDetails()">Editar Detalles del Viaje</button>
       <div id="travelDetailsForm" style="display: none;">
         <label>⏰ Hora: <input type="text" id="travelTime" placeholder="Ej: 14:30"></label>
