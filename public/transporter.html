@@ -33,34 +33,33 @@
       overflow: hidden;
     }
 
-    #registration,
-    #assignment {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 2vh;
-    }
-
     input,
-    textarea {
-      padding: 1vh;
-      font-size: 1.8vh;
+    textarea,
+    button {
+      padding: 1.2vh;
+      font-size: 2vh;
+      border: 1px solid #000;
+      border-radius: 0.5vh;
       width: 100%;
     }
 
     button {
-      padding: 1.5vh;
-      font-size: 2vh;
-      cursor: pointer;
       background-color: #000;
       color: #fff;
-      border: none;
-      border-radius: 0.5vh;
+      cursor: pointer;
     }
 
-    h2, h3 {
+    h2, h3, h4 {
+      font-size: 2.4vh;
       margin-bottom: 1vh;
+    }
+
+    .section {
+      margin-bottom: 2vh;
+    }
+
+    .subsection {
+      margin-bottom: 1.5vh;
     }
 
     #selectedPassengerList,
@@ -84,44 +83,46 @@
     }
   </style>
 </head>
+<body>
+<div class="container">
+  <button onclick="location.href='index.html'">Panel</button>
 
- <button class="title-button" onclick="loadInnerActivity('index.html')">dashboard</button>
   <div id="registration">
-    <h2>Driver Login</h2>
-    <input type="text" id="driverName" placeholder="Enter your name" />
-    <button onclick="registerOrLoginDriver()">Register / Login</button>
+    <h2>Inicio de Sesión del Conductor</h2>
+    <input type="text" id="driverName" placeholder="Ingresa tu nombre" />
+    <button onclick="registerOrLoginDriver()">Registrar / Iniciar Sesión</button>
   </div>
 
-  <!-- Driver Dashboard -->
   <div id="assignment" style="display: none;">
-    <h2>Welcome, <span id="driverWelcome"></span>!</h2>
+    <h2>Bienvenido, <span id="driverWelcome"></span>!</h2>
 
     <div class="section">
-      <h3>Passenger Assignment</h3>
+      <h3>Asignación de Pasajeros</h3>
       <div class="subsection">
-        <h4>✅ Selected Passengers</h4>
+        <h4>✅ Pasajeros Seleccionados</h4>
         <div id="selectedPassengerList"></div>
       </div>
       <div class="subsection">
-        <h4>❌ Not Selected Passengers</h4>
+        <h4>❌ Pasajeros No Seleccionados</h4>
         <div id="notSelectedPassengerList"></div>
       </div>
     </div>
 
     <div class="section">
-      <h3>Travel Details (applies to all passengers)</h3>
-      <button id="toggleTravelBtn" onclick="toggleTravelDetails()">Edit Travel Details</button>
-      <div id="travelDetailsForm">
-        <label>Time: <input type="text" id="travelTime" placeholder="e.g. 14:30"></label><br>
-        <label>Location: <input type="text" id="travelLocation" placeholder="e.g. Main Street 123"></label><br>
-        <label>Comments: <input type="text" id="travelComments" placeholder="e.g. Be ready on time"></label><br>
-        <button onclick="saveTravelDetails()">Save Travel Details</button>
+      <h3>Detalles del Viaje (para todos los pasajeros)</h3>
+      <button id="toggleTravelBtn" onclick="toggleTravelDetails()">Editar Detalles del Viaje</button>
+      <div id="travelDetailsForm" style="display: none;">
+        <label>⏰ Hora: <input type="text" id="travelTime" placeholder="Ej: 14:30"></label>
+        <label>📍 Ubicación: <input type="text" id="travelLocation" placeholder="Ej: Calle Principal 123"></label>
+        <label>📝 Comentarios: <input type="text" id="travelComments" placeholder="Ej: Estén listos a tiempo"></label>
+        <button onclick="saveTravelDetails()">Guardar Detalles</button>
       </div>
     </div>
 
-    <button onclick="logout()">Logout</button>
-    <button onclick="eraseAccount()">Delete Account</button>
+    <button onclick="logout()">Cerrar Sesión</button>
+    <button onclick="eraseAccount()">Eliminar Cuenta</button>
   </div>
+</div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
@@ -165,7 +166,7 @@
   window.registerOrLoginDriver = async () => {
     driverName = document.getElementById("driverName").value.trim();
     if (!driverName) {
-      alert("Please enter your name.");
+      alert("Por favor ingresa tu nombre.");
       return;
     }
 
@@ -205,7 +206,12 @@
     Object.entries(data.passengers || {}).forEach(([id, p]) => {
       const isAssigned = p.driver === driverName;
       const div = document.createElement("div");
-      div.innerHTML = `<label><input type="checkbox" ${isAssigned ? "checked" : ""}> ${p.name}</label>`;
+      div.innerHTML = `<label><input type="checkbox" ${isAssigned ? "checked" : ""}> ${p.name}
+        ${p.numPeople ? `👥 ${p.numPeople}` : ""}
+        ${p.meetLocation ? `📍 ${p.meetLocation}` : ""}
+        ${p.meetTime ? `⏰ ${p.meetTime}` : ""}
+      </label>`;
+
       div.querySelector("input").addEventListener("change", async e => {
         const assign = e.target.checked;
 
@@ -243,7 +249,7 @@
         comments
       });
     }
-    alert("Travel details saved for all passengers.");
+    alert("Detalles guardados para todos los pasajeros.");
   };
 
   window.toggleTravelDetails = () => {
@@ -251,10 +257,10 @@
     const button = document.getElementById("toggleTravelBtn");
     if (form.style.display === "none") {
       form.style.display = "block";
-      button.textContent = "Close Travel Details";
+      button.textContent = "Cerrar Detalles del Viaje";
     } else {
       form.style.display = "none";
-      button.textContent = "Edit Travel Details";
+      button.textContent = "Editar Detalles del Viaje";
     }
   };
 
@@ -264,7 +270,7 @@
   };
 
   window.eraseAccount = async () => {
-    if (!confirm("Are you sure you want to delete your account? This will remove all your assignments.")) {
+    if (!confirm("¿Estás seguro de eliminar tu cuenta? Se borrarán tus asignaciones.")) {
       return;
     }
 
@@ -277,10 +283,9 @@
       localStorage.removeItem("driverName");
       location.reload();
     } else {
-      alert("Error: Driver account not found.");
+      alert("Error: Cuenta de conductor no encontrada.");
     }
   };
 </script>
-
 </body>
 </html>
