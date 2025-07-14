@@ -73,22 +73,24 @@
 <div class="container">
   <button onclick="location.href='index.html'">Ir al Panel</button>
 
-  <div id="authOptions">
+  <div id="initialOptions">
     <h2>Bienvenido</h2>
     <button onclick="showRegisterForm()">Registrarse</button>
     <button onclick="showLoginForm()">Iniciar Sesión</button>
   </div>
 
   <div id="registerForm" class="hidden">
+    <h3>Registro de Cuenta</h3>
     <input type="text" id="newPassengerName" placeholder="Ingresa tu nombre" />
     <button onclick="registerPassenger()">Crear Cuenta</button>
-    <button onclick="backToOptions()">Volver</button>
+    <button onclick="backToInitial()">Volver</button>
   </div>
 
   <div id="loginForm" class="hidden">
+    <h3>Inicio de Sesión</h3>
     <input type="text" id="loginPassengerName" placeholder="Ingresa tu nombre" />
     <button onclick="loginPassenger()">Entrar</button>
-    <button onclick="backToOptions()">Volver</button>
+    <button onclick="backToInitial()">Volver</button>
   </div>
 
   <div id="passengerDashboard" class="hidden">
@@ -163,22 +165,22 @@
   });
 
   function showRegisterForm() {
-    document.getElementById("authOptions").classList.add("hidden");
+    document.getElementById("initialOptions").classList.add("hidden");
     document.getElementById("registerForm").classList.remove("hidden");
   }
 
   function showLoginForm() {
-    document.getElementById("authOptions").classList.add("hidden");
+    document.getElementById("initialOptions").classList.add("hidden");
     document.getElementById("loginForm").classList.remove("hidden");
   }
 
-  function backToOptions() {
+  function backToInitial() {
     ["registerForm", "loginForm"].forEach(id => document.getElementById(id).classList.add("hidden"));
-    document.getElementById("authOptions").classList.remove("hidden");
+    document.getElementById("initialOptions").classList.remove("hidden");
   }
 
   function showPassengerSection() {
-    ["authOptions", "registerForm", "loginForm"].forEach(id => document.getElementById(id).classList.add("hidden"));
+    ["initialOptions", "registerForm", "loginForm"].forEach(id => document.getElementById(id).classList.add("hidden"));
     document.getElementById("passengerDashboard").classList.remove("hidden");
     document.getElementById("passengerWelcome").textContent = passengerName;
   }
