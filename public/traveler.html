@@ -80,7 +80,8 @@
   <div class="container">
     <button onclick="location.href='index.html'">Ir al Panel</button>
 
-<div id="registration" class="hidden">      <h2>Registro de Pasajero</h2>
+<div id="registration" class="hidden">
+   <h2>Registro de Pasajero</h2>
       <input type="text" id="passengerName" placeholder="Ingresa tu nombre" />
       <button onclick="registerOrLoginPassenger()">Entrar</button>
     </div>
@@ -156,18 +157,18 @@ window.addEventListener("DOMContentLoaded", async () => {
       fetchPersonalInfo(passengerName);
       fetchTravelDetails(passengerName);
       setInterval(() => fetchTravelDetails(passengerName), 5000);
-      registrationDiv.classList.add("hidden");
-      dashboardDiv.classList.remove("hidden");
     } else {
       localStorage.removeItem("passengerName");
       registrationDiv.classList.remove("hidden");
       dashboardDiv.classList.add("hidden");
     }
   } else {
+    // Not logged in, show registration
     registrationDiv.classList.remove("hidden");
     dashboardDiv.classList.add("hidden");
   }
 });
+
 
 
   async function checkPassengerExists(name) {
