@@ -80,13 +80,22 @@
 <div class="container">
   <button onclick="location.href='index.html'">Ir al Panel</button>
 
-  <div id="registration" class="hidden">
-    <h2>Pasajero</h2>
-    <input type="text" id="passengerName" placeholder="Ingresa tu nombre" />
-    <div style="display: flex; gap: 1vh;">
-      <button onclick="loginPassenger()">Iniciar Sesión</button>
-      <button onclick="registerPassenger()">Registrarse</button>
-    </div>
+  <div id="authOptions">
+    <h2>Bienvenido</h2>
+    <button onclick="showRegisterForm()">Registrarse</button>
+    <button onclick="showLoginForm()">Iniciar Sesión</button>
+  </div>
+
+  <div id="registerForm" class="hidden">
+    <input type="text" id="newPassengerName" placeholder="Ingresa tu nombre" />
+    <button onclick="registerPassenger()">Crear Cuenta</button>
+    <button onclick="backToOptions()">Volver</button>
+  </div>
+
+  <div id="loginForm" class="hidden">
+    <input type="text" id="loginPassengerName" placeholder="Ingresa tu nombre" />
+    <button onclick="loginPassenger()">Entrar</button>
+    <button onclick="backToOptions()">Volver</button>
   </div>
 
   <div id="passengerDashboard" class="hidden">
@@ -118,195 +127,199 @@
   </div>
 </div>
 
- <script type="module">
- import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-import {
-  getDatabase,
-  ref,
-  set,
-  get,
-  update
-} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+  import {
+    getDatabase,
+    ref,
+    set,
+    get,
+    update
+  } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyD8rSlUYQivypC11w1B4Txy7W7bW81RbP8",
-  authDomain: "ubacarona.firebaseapp.com",
-  databaseURL: "https://ubacarona-default-rtdb.firebaseio.com",
-  projectId: "ubacarona",
-  storageBucket: "ubacarona.firebasestorage.app",
-  messagingSenderId: "1032392073098",
-  appId: "1:1032392073098:web:f40d193f6e867fe0d9f273"
-};
+  const firebaseConfig = {
+    apiKey: "AIzaSyD8rSlUYQivypC11w1B4Txy7W7bW81RbP8",
+    authDomain: "ubacarona.firebaseapp.com",
+    databaseURL: "https://ubacarona-default-rtdb.firebaseio.com",
+    projectId: "ubacarona",
+    storageBucket: "ubacarona.appspot.com",
+    messagingSenderId: "1032392073098",
+    appId: "1:1032392073098:web:f40d193f6e867fe0d9f273"
+  };
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-let passengerName = "";
-let hasPersonalInfo = false;
+  let passengerName = "";
+  let hasPersonalInfo = false;
 
-window.addEventListener("DOMContentLoaded", async () => {
-  const saved = localStorage.getItem("passengerName");
-  const reg = document.getElementById("registration");
-  const dash = document.getElementById("passengerDashboard");
-
-  if (saved) {
-    passengerName = saved;
-    const exists = await checkPassengerExists(saved);
-    if (exists) {
-      showPassengerSection();
-      fetchPersonalInfo(passengerName);
-      fetchTravelDetails(passengerName);
-      setInterval(() => fetchTravelDetails(passengerName), 5000);
-    } else {
-      localStorage.removeItem("passengerName");
-      reg.classList.remove("hidden");
-      dash.classList.add("hidden");
+  window.addEventListener("DOMContentLoaded", async () => {
+    const saved = localStorage.getItem("passengerName");
+    if (saved) {
+      passengerName = saved;
+      const exists = await checkPassengerExists(saved);
+      if (exists) {
+        showPassengerSection();
+        fetchPersonalInfo(passengerName);
+        fetchTravelDetails(passengerName);
+        setInterval(() => fetchTravelDetails(passengerName), 5000);
+      } else {
+        localStorage.removeItem("passengerName");
+      }
     }
-  } else {
-    reg.classList.remove("hidden");
-    dash.classList.add("hidden");
+  });
+
+  function showRegisterForm() {
+    document.getElementById("authOptions").classList.add("hidden");
+    document.getElementById("registerForm").classList.remove("hidden");
   }
-});
 
-function showPassengerSection() {
-  document.getElementById("registration").classList.add("hidden");
-  const dash = document.getElementById("passengerDashboard");
-  dash.classList.remove("hidden");
-  document.getElementById("passengerWelcome").textContent = passengerName;
-}
+  function showLoginForm() {
+    document.getElementById("authOptions").classList.add("hidden");
+    document.getElementById("loginForm").classList.remove("hidden");
+  }
 
-async function checkPassengerExists(name) {
-  const snapshot = await get(ref(db, "passengers"));
-  const data = snapshot.val() || {};
-  return Object.entries(data).find(([id, p]) => p.name.toLowerCase() === name.toLowerCase()) || null;
-}
+  function backToOptions() {
+    ["registerForm", "loginForm"].forEach(id => document.getElementById(id).classList.add("hidden"));
+    document.getElementById("authOptions").classList.remove("hidden");
+  }
 
-window.loginPassenger = async () => {
-  const inputName = document.getElementById("passengerName").value.trim();
-  if (!inputName) return alert("Por favor ingresa tu nombre.");
+  function showPassengerSection() {
+    ["authOptions", "registerForm", "loginForm"].forEach(id => document.getElementById(id).classList.add("hidden"));
+    document.getElementById("passengerDashboard").classList.remove("hidden");
+    document.getElementById("passengerWelcome").textContent = passengerName;
+  }
 
-  const existing = await checkPassengerExists(inputName);
-  if (existing) {
+  async function checkPassengerExists(name) {
+    const snapshot = await get(ref(db, "passengers"));
+    const data = snapshot.val() || {};
+    return Object.entries(data).find(([id, p]) => p.name.toLowerCase() === name.toLowerCase()) || null;
+  }
+
+  window.loginPassenger = async () => {
+    const inputName = document.getElementById("loginPassengerName").value.trim();
+    if (!inputName) return alert("Por favor ingresa tu nombre.");
+
+    const existing = await checkPassengerExists(inputName);
+    if (existing) {
+      localStorage.setItem("passengerName", inputName);
+      location.reload();
+    } else {
+      alert("Este pasajero no está registrado.");
+    }
+  };
+
+  window.registerPassenger = async () => {
+    let inputName = document.getElementById("newPassengerName").value.trim();
+    if (!inputName) return alert("Por favor ingresa tu nombre.");
+
+    const existing = await checkPassengerExists(inputName);
+    if (existing) {
+      const apellido = prompt(`Ya existe un pasajero llamado "${inputName}". Añade tu apellido para diferenciarte:`);
+      if (!apellido) return;
+      inputName = `${inputName} ${apellido}`;
+      const duplicate = await checkPassengerExists(inputName);
+      if (duplicate) return alert("Ese nombre completo ya está registrado. Intenta con otra variación.");
+    }
+
+    const id = crypto.randomUUID();
+    await set(ref(db, `passengers/${id}`), {
+      name: inputName,
+      assigned: false
+    });
+
     localStorage.setItem("passengerName", inputName);
     location.reload();
-  } else {
-    alert("Este nombre no está registrado. ¿Quieres registrarte como nuevo pasajero?");
+  };
+
+  window.toggleEditMode = () => {
+    const summary = document.getElementById("infoSummary");
+    const form = document.getElementById("infoForm");
+    const toggle = document.getElementById("toggleDetailsBtn");
+
+    if (form.classList.contains("hidden")) {
+      form.classList.remove("hidden");
+      summary.classList.add("hidden");
+      toggle.textContent = "CANCELAR";
+    } else {
+      form.classList.add("hidden");
+      summary.classList.remove("hidden");
+      toggle.textContent = "EDITAR DETALLES";
+    }
+  };
+
+  window.savePersonalInfo = async () => {
+    const snapshot = await get(ref(db, "passengers"));
+    const passengers = snapshot.val() || {};
+    const entry = Object.entries(passengers).find(([id, p]) => p.name === passengerName);
+    if (!entry) return;
+
+    const id = entry[0];
+    const numPeople = parseInt(document.getElementById("numPeople").value, 10) || null;
+    const meetLocation = document.getElementById("meetLocation").value;
+    const meetTime = document.getElementById("meetTime").value;
+
+    await update(ref(db, `passengers/${id}`), {
+      numPeople,
+      meetLocation,
+      meetTime
+    });
+
+    fetchPersonalInfo(passengerName);
+  };
+
+  async function fetchPersonalInfo(name) {
+    const snapshot = await get(ref(db, "passengers"));
+    const passengers = snapshot.val() || {};
+    const entry = Object.entries(passengers).find(([id, p]) => p.name === name);
+    if (!entry) return;
+
+    const info = entry[1];
+    const summary = document.getElementById("infoSummary");
+    const form = document.getElementById("infoForm");
+    const personal = document.getElementById("personalDetails");
+    const toggle = document.getElementById("toggleDetailsBtn");
+
+    personal.classList.remove("hidden");
+
+    if (info.numPeople || info.meetLocation || info.meetTime) {
+      hasPersonalInfo = true;
+      summary.innerHTML = `
+        👥 ${info.numPeople || "N/D"} personas<br>
+        📍 ${info.meetLocation || "N/D"}<br>
+        ⏰ ${info.meetTime || "N/D"}`;
+      summary.classList.remove("hidden");
+      form.classList.add("hidden");
+      toggle.textContent = "EDITAR DETALLES";
+    } else {
+      hasPersonalInfo = false;
+      summary.classList.add("hidden");
+      form.classList.add("hidden");
+      toggle.textContent = "AÑADIR DETALLES";
+    }
   }
-};
 
-window.registerPassenger = async () => {
-  let inputName = document.getElementById("passengerName").value.trim();
-  if (!inputName) return alert("Por favor ingresa tu nombre.");
+  async function fetchTravelDetails(name) {
+    const snapshot = await get(ref(db, "passengers"));
+    const passengers = snapshot.val() || {};
+    const entry = Object.values(passengers).find(p => p.name === name);
+    const travelDiv = document.getElementById("travelContent");
 
-  let existing = await checkPassengerExists(inputName);
-  if (existing) {
-    const apellido = prompt(`Ya existe un pasajero llamado "${inputName}". Añade tu apellido para diferenciarte:`);
-
-    if (!apellido) return;
-
-    inputName = `${inputName} ${apellido}`;
-    const duplicate = await checkPassengerExists(inputName);
-    if (duplicate) return alert("Ese nombre completo ya está registrado. Intenta con otra variación.");
+    if (!entry || !entry.driver) {
+      travelDiv.innerHTML = `<p>Esperando asignación…</p>`;
+    } else {
+      travelDiv.innerHTML = `
+        <p><strong>Conductor:</strong> ${entry.driver}</p>
+        ${!hasPersonalInfo && entry.time ? `<p><strong>Hora:</strong> ${entry.time}</p>` : ""}
+        ${!hasPersonalInfo && entry.location ? `<p><strong>Ubicación:</strong> ${entry.location}</p>` : ""}
+        ${entry.comments ? `<p><strong>Comentarios:</strong> ${entry.comments}</p>` : ""}`;
+    }
   }
 
-  const id = crypto.randomUUID();
-  await set(ref(db, `passengers/${id}`), {
-    name: inputName,
-    assigned: false
-  });
-
-  localStorage.setItem("passengerName", inputName);
-  location.reload();
-};
-
-window.toggleEditMode = () => {
-  const summary = document.getElementById("infoSummary");
-  const form = document.getElementById("infoForm");
-  const toggle = document.getElementById("toggleDetailsBtn");
-
-  if (form.classList.contains("hidden")) {
-    form.classList.remove("hidden");
-    summary.classList.add("hidden");
-    toggle.textContent = "CANCELAR";
-  } else {
-    form.classList.add("hidden");
-    summary.classList.remove("hidden");
-    toggle.textContent = "EDITAR DETALLES";
-  }
-};
-
-window.savePersonalInfo = async () => {
-  const snapshot = await get(ref(db, "passengers"));
-  const passengers = snapshot.val() || {};
-  const entry = Object.entries(passengers).find(([id, p]) => p.name === passengerName);
-  if (!entry) return;
-
-  const id = entry[0];
-  const numPeople = parseInt(document.getElementById("numPeople").value, 10) || null;
-  const meetLocation = document.getElementById("meetLocation").value;
-  const meetTime = document.getElementById("meetTime").value;
-
-  await update(ref(db, `passengers/${id}`), {
-    numPeople,
-    meetLocation,
-    meetTime
-  });
-
-  fetchPersonalInfo(passengerName);
-};
-
-async function fetchPersonalInfo(name) {
-  const snapshot = await get(ref(db, "passengers"));
-  const passengers = snapshot.val() || {};
-  const entry = Object.entries(passengers).find(([id, p]) => p.name === name);
-  if (!entry) return;
-
-  const info = entry[1];
-  const summary = document.getElementById("infoSummary");
-  const form = document.getElementById("infoForm");
-  const personal = document.getElementById("personalDetails");
-  const toggle = document.getElementById("toggleDetailsBtn");
-
-  personal.classList.remove("hidden");
-
-  if (info.numPeople || info.meetLocation || info.meetTime) {
-    hasPersonalInfo = true;
-    summary.innerHTML = `
-      👥 ${info.numPeople || "N/D"} personas<br>
-      📍 ${info.meetLocation || "N/D"}<br>
-      ⏰ ${info.meetTime || "N/D"}`;
-    summary.classList.remove("hidden");
-    form.classList.add("hidden");
-    toggle.textContent = "EDITAR DETALLES";
-  } else {
-    hasPersonalInfo = false;
-    summary.classList.add("hidden");
-    form.classList.add("hidden");
-    toggle.textContent = "AÑADIR DETALLES";
-  }
-}
-
-async function fetchTravelDetails(name) {
-  const snapshot = await get(ref(db, "passengers"));
-  const passengers = snapshot.val() || {};
-  const entry = Object.values(passengers).find(p => p.name === name);
-  const travelDiv = document.getElementById("travelContent");
-
-  if (!entry || !entry.driver) {
-    travelDiv.innerHTML = `<p>Esperando asignación…</p>`;
-  } else {
-    travelDiv.innerHTML = `
-      <p><strong>Conductor:</strong> ${entry.driver}</p>
-      ${!hasPersonalInfo && entry.time ? `<p><strong>Hora:</strong> ${entry.time}</p>` : ""}
-      ${!hasPersonalInfo && entry.location ? `<p><strong>Ubicación:</strong> ${entry.location}</p>` : ""}
-      ${entry.comments ? `<p><strong>Comentarios:</strong> ${entry.comments}</p>` : ""}`;
-  }
-}
-
-window.logoutPassenger = () => {
-  localStorage.removeItem("passengerName");
-  location.reload();
-};
+  window.logoutPassenger = () => {
+    localStorage.removeItem("passengerName");
+    location.reload();
+  };
 </script>
 
 </body>
