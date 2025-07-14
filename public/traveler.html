@@ -216,11 +216,19 @@ window.addEventListener("DOMContentLoaded", async () => {
     location.reload();
   };
 
-  function showPassengerSection() {
-    document.getElementById("registration").classList.add("hidden");
-    document.getElementById("passengerDashboard").classList.remove("hidden");
-    document.getElementById("passengerWelcome").textContent = passengerName;
-  }
+function showPassengerSection() {
+  const reg = document.getElementById("registration");
+  const dash = document.getElementById("passengerDashboard");
+
+  reg.classList.add("hidden");
+  reg.style.display = "none"; // <-- force hide just in case
+
+  dash.classList.remove("hidden");
+  dash.style.display = "flex"; // <-- ensure it appears
+
+  document.getElementById("passengerWelcome").textContent = passengerName;
+}
+
 
   async function fetchPersonalInfo(name) {
     const snapshot = await get(ref(db, "passengers"));
