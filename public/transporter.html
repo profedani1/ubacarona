@@ -103,7 +103,7 @@
         <div id="selectedPassengerList"></div>
       </div>
       <div class="subsection">
-        <h4>❌ Pasajeros No Seleccionados</h4>
+        <h4>❌ Pasajeros Disponibles</h4>
         <div id="notSelectedPassengerList"></div>
       </div>
     </div>
@@ -204,6 +204,8 @@
     const assignedNames = driverEntry ? driverEntry[1].passengers || [] : [];
 
     Object.entries(data.passengers || {}).forEach(([id, p]) => {
+      if (p.driver && p.driver !== driverName) return; // No mostrar pasajeros de otro conductor
+
       const isAssigned = p.driver === driverName;
       const div = document.createElement("div");
       div.innerHTML = `<label><input type="checkbox" ${isAssigned ? "checked" : ""}> ${p.name}
