@@ -21,7 +21,9 @@
       justify-content: center;
       align-items: center;
     }
-
+.initialOptions {
+      display: flex;
+    }
     .container {
       width: 90vw;
       height: 90vh;
@@ -71,26 +73,29 @@
 </head>
 <body>
 <div class="container">
-  <button onclick="location.href='index.html'">Ir al Panel</button>
+  <button onclick="location.href='index.html'">Volver al Panel</button>
 
-  <div id="initialOptions">
-    <h2>Bienvenido</h2>
+<div id="initialOptions">
+  <div style="display: flex; height:10vh; gap: 10px; justify-content: center;">
     <button onclick="showRegisterForm()">Registrarse</button>
-    <button onclick="showLoginForm()">Iniciar Sesión</button>
+    <button onclick="showLoginForm()">Ya tengo cuenta</button>
   </div>
+</div>
+
 
   <div id="registerForm" class="hidden">
     <h3>Registro de Cuenta</h3>
     <input type="text" id="newPassengerName" placeholder="Ingresa tu nombre" />
     <button onclick="registerPassenger()">Crear Cuenta</button>
-    <button onclick="backToInitial()">Volver</button>
+ <button onclick="backToInitial()" style="margin-top: 3vh;">Volver</button>
+
   </div>
 
   <div id="loginForm" class="hidden">
     <h3>Inicio de Sesión</h3>
     <input type="text" id="loginPassengerName" placeholder="Ingresa tu nombre" />
     <button onclick="loginPassenger()">Entrar</button>
-    <button onclick="backToInitial()">Volver</button>
+ <button onclick="backToInitial()" style="margin-top: 3vh;">Volver</button>
   </div>
 
   <div id="passengerDashboard" class="hidden">
